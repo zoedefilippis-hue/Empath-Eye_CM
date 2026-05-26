@@ -1,5 +1,3 @@
-from rpi_ws281x import PixelStrip, Color #librairie qui contrôle la LED
-
 #initialisation PIN
 LED_EMOTION_PIN = 18
 
