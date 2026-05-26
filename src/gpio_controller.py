@@ -4,12 +4,32 @@ import RPi.GPIO as GPIO
 from rpi_ws281x import PixelStrip, Color #librairie qui contrôle la LED
 
 GPIO.setmode(GPIO.BCM)
+
+
+# BTN_CAM ######################################################################################################################################
+
+GPIO.setup(config.PIN_MAP["BTN_SAVE"], GPIO.IN, pull_up_down=GPIO.PUD_UP)
+
+_camera = None
+
+def set_camera(cam):
+    global _camera
+    _camera = cam
+
+def take_photo(channel = None):
+    try:
+        filepath = _camera.capture()
+        print(f"Photo sauvegardée : {filepath}")
+    except Exception as e :
+        print(f"Erreur photo : {e}")
+
+GPIO.add_event_detect(config.PIN_MAP["BTN_SAVE"], GPIO.FALLING, callback=take_photo, bouncetime=200)
+
+
+# BLUETOOTH ##################################################################################################################################### 
+
 GPIO.setup(config.PIN_MAP["BTN_BT_ON"], GPIO.IN, pull_up_down=GPIO.PUD_UP)
 GPIO.setup(config.PIN_MAP["BTN_BT_OFF"], GPIO.IN, pull_up_down=GPIO.PUD_UP)
-GPIO.setup(config.PIN_MAP["BTN_POWER_OFF"], GPIO.IN, pull_up_down=GPIO.PUD_UP)
-
-strip = PixelStrip(config.LED_COUNT, config.LED_EMOTION_PIN, config.LED_FREQ_HZ, config.LED_DMA, config.LED_INVERT, config.LED_BRIGHTNESS)
-strip.begin()
 
 def bluetooth_ON(channel=None):
     subprocess.run(["bluetoothctl", "power", "on"])
@@ -17,8 +37,24 @@ def bluetooth_ON(channel=None):
 def bluetooth_OFF(channel=None):
     subprocess.run(["bluetoothctl", "power", "off"])
 
+GPIO.add_event_detect(config.PIN_MAP["BTN_BT_ON"], GPIO.FALLING, callback=bluetooth_ON)
+GPIO.add_event_detect(config.PIN_MAP["BTN_BT_OFF"], GPIO.FALLING, callback=bluetooth_OFF)
+
+
+# OFF ############################################################################################################################################
+
+GPIO.setup(config.PIN_MAP["BTN_POWER_OFF"], GPIO.IN, pull_up_down=GPIO.PUD_UP)
+
 def shutdown(channel=None):
     subprocess.run(["sudo", "shutdown", "-h", "now"])
+
+GPIO.add_event_detect(config.PIN_MAP["BTN_POWER_OFF"], GPIO.FALLING, callback=shutdown)
+
+
+# LED ############################################################################################################################################
+
+strip = PixelStrip(config.LED_COUNT, config.LED_EMOTION_PIN, config.LED_FREQ_HZ, config.LED_DMA, config.LED_INVERT, config.LED_BRIGHTNESS)
+strip.begin()
 
 def set_color(r,g,b):
     strip.setPixelColor(0, Color(r,g,b))
@@ -37,7 +73,5 @@ def LED_color(emotion):
         set_color(180, 180, 180)
 
 
-GPIO.add_event_detect(config.PIN_MAP["BTN_BT_ON"], GPIO.FALLING, callback=bluetooth_ON)
-GPIO.add_event_detect(config.PIN_MAP["BTN_BT_OFF"], GPIO.FALLING, callback=bluetooth_OFF)
-GPIO.add_event_detect(config.PIN_MAP["BTN_POWER_OFF"], GPIO.FALLING, callback=shutdown)
+
 
