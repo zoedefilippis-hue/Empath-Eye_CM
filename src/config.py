@@ -1,3 +1,5 @@
+from rpi_ws281x import PixelStrip, Color #librairie qui contrôle la LED
+
 #initialisation PIN
 LED_EMOTION_PIN = 18
 
@@ -32,3 +34,10 @@ FAN_TEMP_HIGH = 70
 #HAT
 HAT_I2C_BUS = 1
 HAT_I2C_ADDRESS = 0x3C
+
+#LED 
+LED_COUNT = 1          
+LED_FREQ_HZ = 800000
+LED_DMA = 10
+LED_BRIGHTNESS = 255
+LED_INVERT = False
