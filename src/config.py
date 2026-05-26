@@ -21,8 +21,8 @@ PIN_MAP = {
 
 #caméra
 CAMERA_INDEX = 0
-SAVE_DIR = "/media/pi/NOM_DE_TA_SD/captures" #A MODIFIER AVEC L'ADRESSE DE LA CARTE SD
-SAVE_CAPTURE_DIR = "/media/pi/NOM_DE_TA_SD/saved/captures" #A MODIFIER AVEC L'ADRESSE DE LA CARTE SD
+IMAGE_DIR = "/media/pi/NOM_DE_TA_SD/captures" #A MODIFIER AVEC L'ADRESSE DE LA CARTE SD
+SAVE_IMAGE_DIR = "/media/pi/NOM_DE_TA_SD/saved/captures" #A MODIFIER AVEC L'ADRESSE DE LA CARTE SD
 CAMERA_WIDTH = 640
 CAMERA_HEIGHT = 480
 CAMERA_FRAMERATE = 9
@@ -42,6 +42,11 @@ LED_DMA = 10
 LED_BRIGHTNESS = 255
 LED_INVERT = False
 
+#communication IA
+EMO_DIR = "/media/pi/NOM_DE_TA_SD/emo" #A MODIFIER AVEC L'ADRESSE DE LA CARTE SD
+SAVE_EMO_DIR = "/media/pi/NOM_DE_TA_SD/saved/emo" #A MODIFIER AVEC L'ADRESSE DE LA CARTE SD
+
 #bluetooth
 BT_PAIRED_MAC = "XX:XX:XX:XX:XX:XX" #à compléter
-BT_SHARE_DIR = SAVE_CAPTURE_DIR 
+BT_SHARE_DIR1 = EMO_DIR #endroit où le bluetooth va chercher des fichiers à transmettre
+BT_SHARE_DIR2 = SAVE_EMO_DIR #endroit où le bluetooth va chercher des fichiers à transmettre

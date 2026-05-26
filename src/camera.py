@@ -1,10 +1,10 @@
 from picamera2 import Picamera2 #pour piloter la caméra
 import os #pour créer un fichier de sauvegarde
 import datetime #pour horodater le fichier
-from config import CAMERA_WIDTH, CAMERA_HEIGHT, SAVE_DIR, SAVE_CAPTURE_DIR
+from config import CAMERA_WIDTH, CAMERA_HEIGHT, IMAGE_DIR, SAVE_IMAGE_DIR
 
-SD_ADRESS = SAVE_DIR
-SD_ADRESS_CAPTURE = SAVE_CAPTURE_DIR
+SD_ADRESS_IMAGE = IMAGE_DIR
+SD_ADRESS_SAVE_IMAGE = SAVE_IMAGE_DIR
 
 class Camera:
     def __init__(self):
@@ -26,22 +26,23 @@ class Camera:
             raise
 
     def verify_sd(self):
-        if not os.path.exists(SD_ADRESS):
+        if not os.path.exists(SD_ADRESS_IMAGE) or not os.path.exists(SD_ADRESS_SAVE_IMAGE):
             raise RuntimeError(f"Carte SD non trouvée")
-        if not os.access(SD_ADRESS, os.W_OK):
+        if not os.access(SD_ADRESS_IMAGE, os.W_OK) or not os.access(SD_ADRESS_SAVE_IMAGE, os.W_OK):
             raise PermissionError(f"Impossible d'écrire sur la carte SD")
     
     def capture(self, filename=None):
         if not self.ready:
             raise RuntimeError("Caméra non-initialisée")
+        
         self.verify_sd()
 
         if filename is None:
             timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
             filename = f"capture_{timestamp}.jpg"
 
-        os.makedirs(SD_ADRESS, exist_ok = True)
-        filepath = os.path.join(SD_ADRESS, filename)
+        os.makedirs(SD_ADRESS_IMAGE, exist_ok = True)
+        filepath = os.path.join(SD_ADRESS_IMAGE, filename)
 
         self.cam.capture_file(filepath)
         
@@ -53,14 +54,15 @@ class Camera:
     def capture_save(self, filename=None):
         if not self.ready:
             raise RuntimeError("Caméra non-initialisée")
+        
         self.verify_sd()
 
         if filename is None:
             timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
             filename = f"capture_{timestamp}.jpg"
 
-        os.makedirs(SD_ADRESS_CAPTURE, exist_ok = True)
-        filepath = os.path.join(SD_ADRESS_CAPTURE, filename)
+        os.makedirs(SD_ADRESS_SAVE_IMAGE, exist_ok = True)
+        filepath = os.path.join(SD_ADRESS_SAVE_IMAGE, filename)
 
         self.cam.capture_file(filepath)
         
