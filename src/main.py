@@ -4,12 +4,18 @@ import gpio_controller
 from camera import Camera
 
 camera = Camera()
-camera.start
+camera.start()
 gpio_controller.set_camera(camera)
 
 def main():
+    intervale = 1/config.CAMERA_FRAMERATE
     while True:
-        time.sleep(1)
+        try:
+            camera.capture()
+        except Exception as e:
+            print(f"Erreur : {e}")
+
+        time.sleep(intervale)
 
 if __name__ == "__main__":
     main()

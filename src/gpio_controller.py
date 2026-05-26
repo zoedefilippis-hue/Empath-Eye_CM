@@ -18,7 +18,7 @@ def set_camera(cam):
 
 def take_photo(channel = None):
     try:
-        filepath = _camera.capture()
+        filepath = _camera.capture_save()
         print(f"Photo sauvegardée : {filepath}")
     except Exception as e :
         print(f"Erreur photo : {e}")
@@ -62,13 +62,13 @@ def set_color(r,g,b):
 
 def LED_color(emotion):
     if emotion == "Happy":
-        set_color(0, 255, 255)
+        set_color(255, 255, 0)
     elif emotion == "Anger":
-        set_color(0, 0, 255)
+        set_color(255, 0, 0)
     elif emotion == "Surprise":
         set_color(128, 0, 128)
     elif emotion == "Sad":
-        set_color(255, 0, 0)
+        set_color(0, 0, 255)
     elif emotion == "Neutral":
         set_color(180, 180, 180)
 
