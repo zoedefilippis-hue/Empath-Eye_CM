@@ -1,6 +1,7 @@
 import time
 import config
 import gpio_controller
+import emotion_detector
 from camera import Camera
 from gpio_controller import bt
 
@@ -12,7 +13,10 @@ def main():
     intervale = 1/config.CAMERA_FRAMERATE
     while True:
         try:
-            camera.capture()
+            capture = camera.capture()
+            emotion = emotion_detector.detect(capture)
+            if emotion:
+                gpio_controller.LED_color(emotion)
         except Exception as e:
             print(f"Erreur : {e}")
 
