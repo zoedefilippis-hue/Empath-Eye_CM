@@ -2,17 +2,19 @@ import subprocess #permet d'exécuter des commandes systèmes depuis Python
 import threading #permet de faire tourner des tâches en parallèle
 import socket #fournit l'interface réseau (permet de vérifier le bon échange entre les appareils connectés en bluetooth)
 import os #gère les dossiers
+import bluetooth
 from config import BT_SHARE_DIR1, BT_SHARE_DIR2, IMAGE_DIR, SAVE_IMAGE_DIR
 
 VERIF_INTERVAL = 3 #délai entre chaque vérification de connexion
-
+MY_UUID = "12345678-1234-5678-1234-56789abcdef0"
 OBEX_ROOT = "/tmp/bt_share" #racine OBEX
 
 DIRS_TO_CLEAR = [BT_SHARE_DIR1, BT_SHARE_DIR2, IMAGE_DIR, SAVE_IMAGE_DIR]
 
 class Bluetooth:
-    def __init__(self):
+    def __init__(self, power = None):
         self.connected = False #connecté ?
+        self.power = power
         self.server_process = None #processus obex
         self.monitor_thread = None #processus thread
         self.cmd_thread = None #processus thread 2
@@ -125,9 +127,16 @@ class Bluetooth:
         server_sock = socket.socket(
             socket.AF_BLUETOOTH, socket.SOCK_STREAM, socket.BTPROTO_RFCOMM
         )
-        server_sock.bind(("", 1))
+        server_sock.bind(("", bluetooth.PORT_ANY))
         server_sock.listen(1)
-        server_sock.settimeout(1.0)
+        
+        bluetooth.advertise_service(
+            server_sock,
+            "EmoGlassesService", 
+            service_id = MY_UUID, 
+            service_classes=[MY_UUID],
+            profiles = [bluetooth.SERIAL_PORT_PROFILE]
+        )
         
         while not self.stop_event.is_set():
             try:
@@ -140,6 +149,14 @@ class Bluetooth:
                         client_sock.send(b"CLEARED")
                     except Exception as e:
                         client_sock.send(b"ERROR")
+                elif data == "GET BATTERY":
+                    level = self.power.get_battery_level()
+                    charging = self.power.is_charging()
+                    if level is not None:
+                        msg = f"BATTERY:{level}:{'EN COURS DE CHARGEMENT' if charging else 'EN COURS D UTILISATION'}"
+                        client_sock.send(msg.encode())
+                    else:
+                        client_sock.send(b"BATTERIE NON RECONNUE")
                 else:
                     client_sock.send(b"UNKNOWN_CMD")
 
