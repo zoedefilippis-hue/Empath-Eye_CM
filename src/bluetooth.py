@@ -45,6 +45,7 @@ class Bluetooth:
             self.cmd_thread.join(timeout=5) #attend pdt 5s que le thread soit fini, puis l'arrête
         
         self.stop_obex_server() #envoie un terminate au processus OBEX
+        #subprocess: exécute des commandes Linux
         subprocess.run(["bluetoothctl", "discoverable", "off"], capture_output=True) #rend la carte invisible lors d'un scan bluetooth par les autres appareils
         subprocess.run(["bluetoothctl", "pairable", "off"], capture_output=True) #retire l'autorisation de la carte à accepter de nouveaux appairages 
         subprocess.run(["bluetoothctl", "power", "off"], capture_output=True) #éteint le module bluetooth
@@ -53,29 +54,32 @@ class Bluetooth:
     
     
     def ensure_bt_service(self): #vérifie que le service bluetooth tourne et que l'adapteur est disponible
-        result = subprocess.run(["systemectl1", "is-active", "bluetooth"],
-                                capture_outpout = True, text = True)
+        #subprocess: exécute des commandes Linux
+        result = subprocess.run(["systemectl", "is-active", "bluetooth"],
+                                capture_output = True, text = True) #vérifie si le service Bluetooth est actif
         if result.stdout.strip() != "active": #service bluetooth inactif
-            subprocess.run(["sudo", "systemectl1", "start", "bluetooth"], capture_output = True)
+            subprocess.run(["sudo", "systemectl", "start", "bluetooth"], capture_output = True) #active le service  bluetooth
 
         result = subprocess.run(["hciconfig", "hci0"],
-                                capture_outpout = True, text = True)
+                                capture_output = True, text = True) #vérifie que le controleur hci0 existe
         if "hci0" not in result.stdout:
             raise RuntimeError("[Bluetooth] Adapteur hci0 introuvable - vérifier le module BT du CM5")
-        if "DOWN" in result.stdout: #pour lever le hci0
-            subprocess.run(["sudo", "hciconfig", "hci0", "up"], capture_output = True)
+        if "DOWN" in result.stdout: #controleur hci0 désactivé
+            subprocess.run(["sudo", "hciconfig", "hci0", "up"], capture_output = True) #active le controleur
 
 
     
-    def start_obex_serveur(self): #crèe une racine OBEX pour pouvoir pull les fichiers sur l'appareil
+    def start_obex_server(self): #crèe une racine OBEX pour pouvoir pull les fichiers sur l'appareil
         os.makedirs(OBEX_ROOT, exist_ok = True)
 
+        #permet de voir les fichiers
         for share_dir in [BT_SHARE_DIR1, BT_SHARE_DIR2]:
             os.makedirs(share_dir, exist_ok = True)
             link_name = os.path.join(OBEX_ROOT, os.path.basename(share_dir))
             if not os.path.islink(link_name):
                 os.symlink(share_dir, link_name)
         
+        #vérifie que le processus tourne déjà sur le serveur
         if self.server_process and self.server_process.poll() is None:
             return
         
@@ -97,40 +101,40 @@ class Bluetooth:
     
     
 
-    def clear_all_data(self): #supression des fichiers du jour
+    def clear_all_data(self): #supression des fichiers si l'envoi des émotions est réussi
         for directory in DIRS_TO_CLEAR:
             if not os.path.exists(directory):
                 continue
             for filename in os.listdir(directory):
                 filepath = os.path.join(directory, filename)
                 try:
-                    if os.path.isfiles(filepath):
+                    if os.path.isfile(filepath):
                         os.remove(filepath)
                 except Exception as e:
                     print(f"Impossible de supprimer {filepath} : {e}")
 
 
-    def start_command_listener(self):
+    def start_command_listener(self): #crée un thread pour écouter les commandes Bluetooth
         self.cmd_thread = threading.Thread(
             target = self.command_loop, daemon = True
         )
         self.cmd_thread.start()
 
     
-    def command_loop(self):
+    def command_loop(self): #boucle réseau Bluetooth
         server_sock = socket.socket(
             socket.AF_BLUETOOTH, socket.SOCK_STREAM, socket.BTPROTO_RFCOMM
         )
         server_sock.bind(("", 1))
         server_sock.listen(1)
-        server_sock.settimeout(1,0)
+        server_sock.settimeout(1.0)
         
         while not self.stop_event.is_set():
             try:
                 client_sock, addr = server_sock.accept()
-                data = client_sock.recv(64).strip()
+                data = client_sock.recv(64).decode().strip() #lit une commande d'un téléphone
 
-                if data== b"TRANSFER_OK":
+                if data== "TRANSFER_OK":
                     try:
                         self.clear_all_data()
                         client_sock.send(b"CLEARED")
@@ -150,7 +154,7 @@ class Bluetooth:
 
     
 
-    def any_device_connected(self):
+    def any_device_connected(self): #vérifie si un appareil est connecté
         try:
             result = subprocess.run(
                 ["bluetoothctl",  "devices", "Connected"], capture_output = True, text = True, timeout = 3
@@ -167,7 +171,7 @@ class Bluetooth:
         self.monitor_thread.start()
 
     
-    def monitor_loop(self):
+    def monitor_loop(self): #vérifie la connexion toutes les 3s
         while not self.stop_event.is_set():
             now_connected =self.any_device_connected()
 
