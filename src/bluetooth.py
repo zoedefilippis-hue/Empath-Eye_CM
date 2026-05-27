@@ -55,10 +55,10 @@ class Bluetooth:
     
     def ensure_bt_service(self): #vérifie que le service bluetooth tourne et que l'adapteur est disponible
         #subprocess: exécute des commandes Linux
-        result = subprocess.run(["systemectl", "is-active", "bluetooth"],
+        result = subprocess.run(["systemctl", "is-active", "bluetooth"],
                                 capture_output = True, text = True) #vérifie si le service Bluetooth est actif
         if result.stdout.strip() != "active": #service bluetooth inactif
-            subprocess.run(["sudo", "systemectl", "start", "bluetooth"], capture_output = True) #active le service  bluetooth
+            subprocess.run(["sudo", "systemctl", "start", "bluetooth"], capture_output = True) #active le service  bluetooth
 
         result = subprocess.run(["hciconfig", "hci0"],
                                 capture_output = True, text = True) #vérifie que le controleur hci0 existe

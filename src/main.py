@@ -2,6 +2,7 @@ import time
 import config
 import gpio_controller
 import emotion_detector
+import cv2
 from camera import Camera
 from gpio_controller import bt
 
@@ -13,8 +14,9 @@ def main():
     intervale = 1/config.CAMERA_FRAMERATE
     while True:
         try:
-            capture = camera.capture()
-            emotion = emotion_detector.detect(capture)
+            filepath = camera.capture()
+            frame = cv2.imread(filepath)
+            emotion = emotion_detector.detect(frame)
             if emotion:
                 gpio_controller.LED_color(emotion)
         except Exception as e:

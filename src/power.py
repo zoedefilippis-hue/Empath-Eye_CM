@@ -28,7 +28,7 @@ class Power:
             return None
         
     def get_battery_level(self):
-        raw = self.read_raw_status()
+        raw = self.read_status()
         if raw is None:
             return None
         level = raw & 0x7F #vérifier la valeur du masque en mettant la batterie à 100% puis à 0% et voir la valeur retournée
@@ -36,7 +36,7 @@ class Power:
         return level
     
     def is_charging(self):
-        raw = self.read_raw_status()
+        raw = self.read_status()
         if raw is None:
             return False
         charging = bool(raw & 0x80) #vérifier la valeur du masque en branchant et débranchant la batterie et voir la valeur retournée
