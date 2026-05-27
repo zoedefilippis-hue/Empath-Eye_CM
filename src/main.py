@@ -2,6 +2,7 @@ import time
 import config
 import gpio_controller
 from camera import Camera
+from gpio_controller import bt
 
 camera = Camera()
 camera.start()
