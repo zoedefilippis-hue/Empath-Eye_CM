@@ -39,8 +39,8 @@ def bluetooth_ON(channel=None):
 def bluetooth_OFF(channel=None):
     bt.disable()
 
-GPIO.add_event_detect(config.PIN_MAP["BTN_BT_ON"], GPIO.FALLING, callback=bluetooth_ON, bouncetime=300)
-GPIO.add_event_detect(config.PIN_MAP["BTN_BT_OFF"], GPIO.FALLING, callback=bluetooth_OFF, bouncetime=300)
+GPIO.add_event_detect(config.PIN_MAP["BTN_BT_ON"], GPIO.FALLING, callback=bluetooth_ON)
+GPIO.add_event_detect(config.PIN_MAP["BTN_BT_OFF"], GPIO.FALLING, callback=bluetooth_OFF)
 
 # OFF
 

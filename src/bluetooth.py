@@ -134,7 +134,7 @@ class Bluetooth:
                 client_sock, addr = server_sock.accept()
                 data = client_sock.recv(64).decode().strip() #lit une commande d'un téléphone
 
-                if data== "TRANSFER_OK":
+                if data == "TRANSFER_OK":
                     try:
                         self.clear_all_data()
                         client_sock.send(b"CLEARED")
@@ -148,7 +148,7 @@ class Bluetooth:
             except socket.timeout:
                 continue
             except Exception as e:
-                return
+                continue
         
         server_sock.close()
 
