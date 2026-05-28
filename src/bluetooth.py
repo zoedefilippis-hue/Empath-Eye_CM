@@ -6,7 +6,7 @@ import bluetooth
 from config import BT_SHARE_DIR1, BT_SHARE_DIR2, IMAGE_DIR, SAVE_IMAGE_DIR
 
 VERIF_INTERVAL = 3 #délai entre chaque vérification de connexion
-MY_UUID = "12345678-1234-5678-1234-56789abcdef0"
+MY_UUID = "948c621a-6017-443d-8f75-fd00cf7af340" #UUID de service qui assure la connexion
 OBEX_ROOT = "/tmp/bt_share" #racine OBEX
 
 DIRS_TO_CLEAR = [BT_SHARE_DIR1, BT_SHARE_DIR2, IMAGE_DIR, SAVE_IMAGE_DIR]
@@ -149,6 +149,7 @@ class Bluetooth:
                         client_sock.send(b"CLEARED")
                     except Exception as e:
                         client_sock.send(b"ERROR")
+                
                 elif data == "GET BATTERY":
                     level = self.power.get_battery_level()
                     charging = self.power.is_charging()
@@ -157,6 +158,7 @@ class Bluetooth:
                         client_sock.send(msg.encode())
                     else:
                         client_sock.send(b"BATTERIE NON RECONNUE")
+                
                 else:
                     client_sock.send(b"UNKNOWN_CMD")
 
