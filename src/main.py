@@ -6,6 +6,7 @@ import cv2
 from camera import Camera
 from power import Power
 from gpio_controller import bt
+from gpio_controller import add_shutdown_hook
 from config import init_gpio
 
 init_gpio()
@@ -17,6 +18,9 @@ gpio_controller.set_camera(camera)
 power = Power()
 power.init()
 bt.power = power
+
+add_shutdown_hook(camera.stop)
+add_shutdown_hook(power.stop)
 
 def main():
     intervale = 1/config.CAMERA_FRAMERATE

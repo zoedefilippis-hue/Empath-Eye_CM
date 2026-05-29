@@ -6,6 +6,7 @@ from bluetooth import Bluetooth
 from config import init_gpio
 
 init_gpio()
+shutdown_hooks = []
 
 # BTN_CAM
 
@@ -43,15 +44,22 @@ GPIO.add_event_detect(config.PIN_MAP["BTN_BT_ON"], GPIO.FALLING, callback=blueto
 GPIO.add_event_detect(config.PIN_MAP["BTN_BT_OFF"], GPIO.FALLING, callback=bluetooth_OFF)
 
 # OFF
-
 GPIO.setup(config.PIN_MAP["BTN_POWER_OFF"], GPIO.IN, pull_up_down=GPIO.PUD_UP)
 
+def add_shutdown_hook(fn):
+    shutdown_hooks.append(fn)
+
 def shutdown(channel=None):
+    for hook in shutdown_hooks:
+        try:
+           hook()
+        except Exception as e:
+           continue
     bt.disable() #arrêt du bluetooth avant d'éteindre l'appareil
     subprocess.run(["sudo", "shutdown", "-h", "now"])
 
 GPIO.add_event_detect(config.PIN_MAP["BTN_POWER_OFF"], GPIO.FALLING, callback=shutdown)
-
+###
 
 # LED
 
