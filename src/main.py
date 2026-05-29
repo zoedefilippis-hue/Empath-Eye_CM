@@ -6,6 +6,9 @@ import cv2
 from camera import Camera
 from power import Power
 from gpio_controller import bt
+from config import init_gpio
+
+init_gpio()
 
 camera = Camera()
 camera.start()

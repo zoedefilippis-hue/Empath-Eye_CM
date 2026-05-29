@@ -1,3 +1,6 @@
+import RPi.GPIO as GPIO
+import os
+
 #initialisation PIN
 LED_EMOTION_PIN = 18
 
@@ -9,7 +12,11 @@ BUTTON_POWER_OFF_PIN = 13
 BUTTON_BLUETOOTH_ON_PIN = 15
 BUTTON_BLUETOOTH_OFF_PIN = 29
 
+
 GPIO_MODE = "BCM"
+def init_gpio():
+    GPIO.setmode(GPIO.BCM)
+
 PIN_MAP = {
     "LED_EMOTION"      : LED_EMOTION_PIN,
     "BTN_SAVE"         : BUTTON_SAVE_PIN,
@@ -45,6 +52,7 @@ LED_INVERT = False
 #communication IA
 EMO_DIR = "/media/pi/NOM_DE_TA_SD/emo" #A MODIFIER AVEC L'ADRESSE DE LA CARTE SD
 SAVE_EMO_DIR = "/media/pi/NOM_DE_TA_SD/saved/emo" #A MODIFIER AVEC L'ADRESSE DE LA CARTE SD
+MODEL_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "best_model(1).pth")
 
 #bluetooth
 BT_SHARE_DIR1 = EMO_DIR #endroit où le bluetooth va chercher des fichiers à transmettre

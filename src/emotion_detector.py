@@ -3,6 +3,7 @@ import torch.nn as nn
 from torchvision import transforms, models
 from PIL import Image
 import cv2
+from config import MODEL_DIR
 
 class EmotionResNet(nn.Module):
     def __init__(self, num_classes=5):
@@ -20,7 +21,7 @@ class EmotionResNet(nn.Module):
     
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 model = EmotionResNet(num_classes=5).to(device)
-model.load_state_dict(torch.load("best_model(1).pth", map_location=device))
+model.load_state_dict(torch.load(MODEL_DIR, map_location=device))
 model.eval()
 
 emotion_labels = {0: "Happy", 1: "Surprise", 2: "Sad", 3: "Anger", 4: "Neutral"}

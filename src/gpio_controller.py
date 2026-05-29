@@ -3,9 +3,9 @@ import config
 import RPi.GPIO as GPIO
 from rpi_ws281x import PixelStrip, Color #librairie qui contrôle la LED
 from bluetooth import Bluetooth
+from config import init_gpio
 
-GPIO.setmode(GPIO.BCM)
-
+init_gpio()
 
 # BTN_CAM
 

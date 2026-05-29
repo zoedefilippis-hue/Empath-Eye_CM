@@ -1,7 +1,7 @@
 from picamera2 import Picamera2 #pour piloter la caméra
 import os #pour créer un fichier de sauvegarde
 import datetime #pour horodater le fichier
-from config import CAMERA_WIDTH, CAMERA_HEIGHT, IMAGE_DIR, SAVE_IMAGE_DIR
+from config import CAMERA_INDEX, CAMERA_WIDTH, CAMERA_HEIGHT, IMAGE_DIR, SAVE_IMAGE_DIR
 
 SD_ADRESS_IMAGE = IMAGE_DIR
 SD_ADRESS_SAVE_IMAGE = SAVE_IMAGE_DIR
@@ -13,7 +13,7 @@ class Camera:
 
     def start(self):
         try:
-            self.cam = Picamera2()
+            self.cam = Picamera2(CAMERA_INDEX)
             config = self.cam.create_still_configuration(
                 main={"size": (CAMERA_WIDTH, CAMERA_HEIGHT), "format": "RGB888"}
             )
