@@ -59,7 +59,6 @@ def shutdown(channel=None):
     subprocess.run(["sudo", "shutdown", "-h", "now"])
 
 GPIO.add_event_detect(config.PIN_MAP["BTN_POWER_OFF"], GPIO.FALLING, callback=shutdown)
-###
 
 # LED
 
@@ -81,7 +80,3 @@ def LED_color(emotion):
         set_color(0, 0, 255)
     elif emotion == "Neutral":
         set_color(180, 180, 180)
-
-
-
-

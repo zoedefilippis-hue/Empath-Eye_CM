@@ -151,13 +151,16 @@ class Bluetooth:
                         client_sock.send(b"ERROR")
                 
                 elif data == "GET BATTERY":
-                    level = self.power.get_battery_level()
-                    charging = self.power.is_charging()
-                    if level is not None:
-                        msg = f"BATTERY:{level}:{'EN COURS DE CHARGEMENT' if charging else 'EN COURS D UTILISATION'}"
-                        client_sock.send(msg.encode())
-                    else:
+                    if self.power is None:
                         client_sock.send(b"BATTERIE NON RECONNUE")
+                    else:
+                        level = self.power.get_battery_level()
+                        charging = self.power.is_charging()
+                        if level is not None:
+                            msg = f"BATTERY:{level}:{'EN COURS DE CHARGEMENT' if charging else 'EN COURS D UTILISATION'}"
+                            client_sock.send(msg.encode())
+                        else:
+                            client_sock.send(b"BATTERIE NON RECONNUE")
                 
                 else:
                     client_sock.send(b"UNKNOWN_CMD")
