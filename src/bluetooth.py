@@ -29,7 +29,7 @@ DBUS_OM_IFACE       = "org.freedesktop.DBus.ObjectManager"
 
 
 class BLEAdvertisement(dbus.service.Object):
-    PATH = "/org/bluez/emoglasses/advertisement0"
+    PATH = "/org/bluez/empahteye/advertisement0"
 
     def __init__(self, bus):
         dbus.service.Object.__init__(self, bus, self.PATH)
@@ -49,7 +49,7 @@ class BLEAdvertisement(dbus.service.Object):
         return {
             "Type":           dbus.String("peripheral"),
             "ServiceUUIDs":   dbus.Array([SERVICE_UUID], signature="s"),
-            "LocalName":      dbus.String("EmoGlasses"),
+            "LocalName":      dbus.String("Empath'Eye"),
             "IncludeTxPower": dbus.Boolean(True),
         }
 
@@ -59,7 +59,7 @@ class BLEAdvertisement(dbus.service.Object):
 
 
 class CharTransfer(dbus.service.Object):
-    PATH = "/org/bluez/emoglasses/service0/char0"
+    PATH = "/org/bluez/empahteye/service0/char0"
  
     def __init__(self, bus):
         dbus.service.Object.__init__(self, bus, self.PATH)
@@ -68,7 +68,7 @@ class CharTransfer(dbus.service.Object):
     @dbus.service.method(DBUS_PROP_IFACE, in_signature="s", out_signature="a{sv}")
     def GetAll(self, iface):
         return {
-            "Service":   dbus.ObjectPath("/org/bluez/emoglasses/service0"),
+            "Service":   dbus.ObjectPath("/org/bluez/empahteye/service0"),
             "UUID":      dbus.String(CHAR_TRANSFER),
             "Flags":     dbus.Array(["notify"], signature="s"),
             "Notifying": dbus.Boolean(self.notifying),
@@ -108,7 +108,7 @@ class CharTransfer(dbus.service.Object):
 
 
 class CharCommand(dbus.service.Object):
-    PATH = "/org/bluez/emoglasses/service0/char2"
+    PATH = "/org/bluez/empahteye/service0/char2"
  
     def __init__(self, bus, bluetooth_instance):
         dbus.service.Object.__init__(self, bus, self.PATH)
@@ -117,8 +117,8 @@ class CharCommand(dbus.service.Object):
     @dbus.service.method(DBUS_PROP_IFACE, in_signature="s", out_signature="a{sv}")
     def GetAll(self, iface):
         return {
-            "Service": dbus.ObjectPath("/org/bluez/emoglasses/service0"),
-            "UUID":    dbus.String(CHAR_COMMAND),   # UUID d'état — App → Pi
+            "Service": dbus.ObjectPath("/org/bluez/empahteye/service0"),
+            "UUID":    dbus.String(CHAR_COMMAND),
             "Flags":   dbus.Array(["write", "write-without-response"], signature="s"),
         }
  
@@ -142,7 +142,7 @@ class CharCommand(dbus.service.Object):
             print(f"[BLE] Commande inconnue : {cmd}")
 
 class GattService(dbus.service.Object):
-    PATH = "/org/bluez/emoglasses/service0"
+    PATH = "/org/bluez/empahteye/service0"
  
     def __init__(self, bus, bluetooth_instance):
         dbus.service.Object.__init__(self, bus, self.PATH)
@@ -245,7 +245,7 @@ class Bluetooth:
             bus.get_object(BLUEZ_SERVICE, adapter_path), GATT_MANAGER_IFACE
         )
         gatt_manager.RegisterApplication(
-            "/org/bluez/emoglasses/service0",
+            "/org/bluez/empahteye/service0",
             {},
             reply_handler=lambda: print("[BLE] Service GATT enregistré"),
             error_handler=lambda e: print(f"[BLE] Erreur GATT : {e}")
