@@ -48,7 +48,7 @@ LED_INVERT = False
 #communication IA
 EMO_DIR = "/media/pi/NOM_DE_TA_SD/emo" #A MODIFIER AVEC L'ADRESSE DE LA CARTE SD
 SAVE_EMO_DIR = "/media/pi/NOM_DE_TA_SD/saved/emo" #A MODIFIER AVEC L'ADRESSE DE LA CARTE SD
-MODEL_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "best_model(1).pth")
+MODEL_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "best_model_2.pth")
 
 #bluetooth
 BT_SHARE_DIR1 = EMO_DIR #endroit où le bluetooth va chercher des fichiers à transmettre
