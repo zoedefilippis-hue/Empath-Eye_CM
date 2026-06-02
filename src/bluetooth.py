@@ -352,6 +352,7 @@ class Bluetooth:
                 try:
                     if os.path.isfile(filepath):
                         os.remove(filepath)
+                        total += 1
                 except Exception as e:
                     print(f"Impossible de supprimer {filepath} : {e}")
         print(f"[BLE] Nettoyage terminé — {total} fichier(s) supprimé(s)")

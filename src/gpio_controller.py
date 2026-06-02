@@ -19,6 +19,9 @@ def set_camera(cam):
     _camera = cam
 
 def take_photo(channel = None):
+    if _camera is None:
+        print("Caméra non prête")
+        return
     try:
         filepath = _camera.capture_save()
         print(f"Photo sauvegardée : {filepath}")
