@@ -204,7 +204,11 @@ class Bluetooth:
         if self.monitor_thread:
             self.monitor_thread.join(timeout=5)
 
-        
+        self.glib_loop = None
+        self.glib_thread = None
+        self.service = None
+        self.adv = None
+
         #subprocess: exécute des commandes Linux
         subprocess.run(["bluetoothctl", "discoverable", "off"], capture_output=True) #rend la carte invisible lors d'un scan bluetooth par les autres appareils
         subprocess.run(["bluetoothctl", "pairable", "off"], capture_output=True) #retire l'autorisation de la carte à accepter de nouveaux appairages 
