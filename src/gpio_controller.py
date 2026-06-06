@@ -1,6 +1,6 @@
 import subprocess
 import config
-import RPi.GPIO as GPIO
+from gpiozero import Button
 from rpi_ws281x import PixelStrip, Color #librairie qui contrôle la LED
 from bluetooth import Bluetooth
 from config import init_gpio
@@ -10,7 +10,7 @@ shutdown_hooks = []
 
 # BTN_CAM
 
-GPIO.setup(config.PIN_MAP["BTN_SAVE"], GPIO.IN, pull_up_down=GPIO.PUD_UP)
+btn_save = Button(config.PIN_MAP["BTN_SAVE"], pull_up=True)
 
 _camera = None
 
@@ -28,14 +28,13 @@ def take_photo(channel = None):
     except Exception as e :
         print(f"Erreur photo : {e}")
 
-GPIO.add_event_detect(config.PIN_MAP["BTN_SAVE"], GPIO.FALLING, callback=take_photo, bouncetime=200)
-
+btn_save.when_pressed = take_photo
 
 # BLUETOOTH
 
 bt = Bluetooth()
-GPIO.setup(config.PIN_MAP["BTN_BT_ON"], GPIO.IN, pull_up_down=GPIO.PUD_UP)
-GPIO.setup(config.PIN_MAP["BTN_BT_OFF"], GPIO.IN, pull_up_down=GPIO.PUD_UP)
+btn_bt_on = Button(config.PIN_MAP["BTN_BT_ON"], pull_up=True)
+btn_bt_off = Button(config.PIN_MAP["BTN_BT_OFF"], pull_up=True)
 
 def bluetooth_ON(channel=None):
     bt.enable()
@@ -43,11 +42,11 @@ def bluetooth_ON(channel=None):
 def bluetooth_OFF(channel=None):
     bt.disable()
 
-GPIO.add_event_detect(config.PIN_MAP["BTN_BT_ON"], GPIO.FALLING, callback=bluetooth_ON)
-GPIO.add_event_detect(config.PIN_MAP["BTN_BT_OFF"], GPIO.FALLING, callback=bluetooth_OFF)
+btn_bt_on.when_pressed = bluetooth_ON
+btn_bt_off.when_pressed = bluetooth_OFF
 
 # OFF
-GPIO.setup(config.PIN_MAP["BTN_POWER_OFF"], GPIO.IN, pull_up_down=GPIO.PUD_UP)
+btn_power_off = Button(config.PIN_MAP["BTN_POWER_OFF"], pull_up=True)
 
 def add_shutdown_hook(fn):
     shutdown_hooks.append(fn)
@@ -61,7 +60,7 @@ def shutdown(channel=None):
     bt.disable() #arrêt du bluetooth avant d'éteindre l'appareil
     subprocess.run(["sudo", "shutdown", "-h", "now"])
 
-GPIO.add_event_detect(config.PIN_MAP["BTN_POWER_OFF"], GPIO.FALLING, callback=shutdown)
+btn_power_off.when_pressed = shutdown
 
 # LED
 
