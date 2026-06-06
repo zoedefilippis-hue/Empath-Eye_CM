@@ -2,7 +2,7 @@ import lgpio
 import os
 
 #initialisation PIN
-LED_EMOTION_PIN = 16
+LED_EMOTION_PIN = 12
 
 BUTTON_SAVE_PIN = 18
 # Pas de bouton Power
