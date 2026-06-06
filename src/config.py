@@ -1,4 +1,4 @@
-import RPi.GPIO as GPIO
+import lgpio
 import os
 
 #initialisation PIN
@@ -15,7 +15,7 @@ BUTTON_BLUETOOTH_OFF_PIN = 29
 
 GPIO_MODE = "BCM"
 def init_gpio():
-    GPIO.setmode(GPIO.BCM)
+    pass
 
 PIN_MAP = {
     "LED_EMOTION"      : LED_EMOTION_PIN,
