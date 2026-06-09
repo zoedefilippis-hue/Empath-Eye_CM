@@ -1,5 +1,7 @@
 import subprocess
 import config
+import board
+import neopixel
 from gpiozero import Button
 from rpi_ws281x import PixelStrip, Color #librairie qui contrôle la LED
 from bluetooth import Bluetooth
@@ -64,12 +66,10 @@ btn_power_off.when_pressed = shutdown
 
 # LED
 
-strip = PixelStrip(config.LED_COUNT, config.LED_EMOTION_PIN, config.LED_FREQ_HZ, config.LED_DMA, config.LED_INVERT, config.LED_BRIGHTNESS)
-strip.begin()
+pixel = neopixel.NeoPixel(board.D12, config.LED_COUNT, brightness=config.LED_BRIGHTNESS/255)
 
 def set_color(r,g,b):
-    strip.setPixelColor(0, Color(r,g,b))
-    strip.show()
+    pixel[0] = (r, g, b)
 
 def LED_color(emotion):
     if emotion == "Happy":
