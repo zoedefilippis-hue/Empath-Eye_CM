@@ -28,8 +28,8 @@ PIN_MAP = {
 
 #caméra
 CAMERA_INDEX = 0
-IMAGE_DIR = "/empatheye/image/loop" #A MODIFIER AVEC L'ADRESSE DE LA CARTE SD
-SAVE_IMAGE_DIR = "/empatheye/image/saved" #A MODIFIER AVEC L'ADRESSE DE LA CARTE SD
+IMAGE_DIR = "/home/empatheye1/empatheye/image/loop" #A MODIFIER AVEC L'ADRESSE DE LA CARTE SD
+SAVE_IMAGE_DIR = "/home/empatheye1/empatheye/image/saved" #A MODIFIER AVEC L'ADRESSE DE LA CARTE SD
 CAMERA_WIDTH = 640
 CAMERA_HEIGHT = 480
 CAMERA_FRAMERATE = 9
@@ -42,8 +42,8 @@ LED_BRIGHTNESS = 255
 LED_INVERT = False
 
 #communication IA
-EMO_DIR = "/empatheye/emo/loop" #A MODIFIER AVEC L'ADRESSE DE LA CARTE SD
-SAVE_EMO_DIR = "/empatheye/emo/saved" #A MODIFIER AVEC L'ADRESSE DE LA CARTE SD
+EMO_DIR = "/home/empatheye1/empatheye/emo/loop" #A MODIFIER AVEC L'ADRESSE DE LA CARTE SD
+SAVE_EMO_DIR = "/home/empatheye1/empatheye/emo/saved" #A MODIFIER AVEC L'ADRESSE DE LA CARTE SD
 MODEL_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "best_model_2.pth")
 
 #bluetooth
