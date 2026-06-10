@@ -8,12 +8,12 @@ from config import MODEL_DIR
 class EmotionResNet(nn.Module):
     def __init__(self, num_classes=5):
         super().__init__()
-        self.backbone = models.resnet18(weights=None)
-        self.backbone.fc = nn.Sequential(
-            nn.Dropout(0.5),
-            nn.Linear(512, 256),    
+        self.backbone = models.mobilenet_v2(weights=None)
+        self.backbone.classifier = nn.Sequential(
+            nn.Dropout(0.2),
+            nn.Linear(1280, 256),
             nn.ReLU(),
-            nn.Dropout(0.3),
+            nn.Dropout(0.2),
             nn.Linear(256, num_classes)
         )
     def forward(self, x):
