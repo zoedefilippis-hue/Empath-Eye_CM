@@ -8,7 +8,7 @@ from config import MODEL_DIR
 class EmotionResNet(nn.Module):
     def __init__(self, num_classes=5):
         super().__init__()
-        self.backbone = models.mobilenet_b2(weights=None)
+        self.backbone = models.efficientnet_b2(weights=None)
         self.backbone.classifier = nn.Sequential(
             nn.Dropout(0.2),
             nn.Linear(1408, 256),
