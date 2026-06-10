@@ -72,44 +72,42 @@ class Camera:
         
         return filepath
     
-    def emotion(self, emotion=None):
-        
-        if not self.ready:
-            raise RuntimeError("Caméra non-initialisée")
-        
-        self.verify_sd()
-
-        if not os.path.exists(EMO_DIR):
-            os.makedirs(EMO_DIR, exist_ok=True)
-        
+    def emotion(self, emotion):
+        os.makedirs(EMO_DIR, exist_ok=True)
+        filepath = os.path.join(EMO_DIR, "emotions.json")
         timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
         
-        filepath = os.path.join(EMO_DIR, f"emo_{timestamp}.json")
+        if os.path.exists(filepath):
+            with open(filepath, "r") as f:
+                data = json.load(f)
+        else:
+            data = []
+        
+        data.append({"emotion": emotion, "timestamp": timestamp})
         
         with open(filepath, "w") as f:
-            json.dump({"emotion": emotion, "timestamp": timestamp}, f)
+            json.dump(data, f)
         
         return filepath
     
-    def emotion_save(self, emotion=None):
-        
-        if not self.ready:
-            raise RuntimeError("Caméra non-initialisée")
-        
-        self.verify_sd()
-
-        if not os.path.exists(EMO_DIR):
-            os.makedirs(EMO_DIR, exist_ok=True)
-        
+    def save_emotion(self, emotion):
+        os.makedirs(EMO_DIR, exist_ok=True)
+        filepath = os.path.join(SAVE_EMO_DIR, "emotions.json")
         timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
         
-        filepath = os.path.join(SAVE_EMO_DIR, f"emo_{timestamp}.json")
+        if os.path.exists(filepath):
+            with open(filepath, "r") as f:
+                data = json.load(f)
+        else:
+            data = []
+        
+        data.append({"emotion": emotion, "timestamp": timestamp})
         
         with open(filepath, "w") as f:
-            json.dump({"emotion": emotion, "timestamp": timestamp}, f)
+            json.dump(data, f)
         
         return filepath
-
+    
     def stop(self): ##Pas sure de garder cette fonction
         if self.cam and self.ready:
             self.cam.stop()
