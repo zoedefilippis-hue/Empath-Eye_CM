@@ -135,9 +135,6 @@ class CharCommand(dbus.service.Object):
         elif cmd == "TRANSFER_OK":
             self.bt.clear_all_data()
  
-        elif cmd == "GET_BATTERY":
-            threading.Thread(target=self.bt.send_battery, daemon=True).start()
- 
         else:
             print(f"[BLE] Commande inconnue : {cmd}")
 
@@ -322,28 +319,6 @@ class Bluetooth:
         # Marqueur de fin — l'app sait que tous les fichiers ont été envoyés
         char.notify_meta("__END__", 0)
         print("[BLE] Tous les fichiers envoyés")
-
-
-    def send_battery(self):
-        """Répond à GET_BATTERY via CHAR_TRANSFER : d'abord le marqueur, puis le payload."""
-        if not self.service:
-            return
-        if self.power is None:
-            payload = "BATTERIE NON RECONNUE"
-        else:
-            level    = self.power.get_battery_level()
-            charging = self.power.is_charging()
-            if level is not None:
-                status  = "EN COURS DE CHARGEMENT" if charging else "EN COURS D'UTILISATION"
-                payload = f"BATTERY:{level}:{status}"
-            else:
-                payload = "BATTERIE NON RECONNUE"
- 
-        char = self.service.char_transfer
-        char.notify_meta("__BATTERY__", len(payload.encode()))
-        char.notify_chunk(payload.encode())
-
-
 
 
     def clear_all_data(self): #supression des fichiers si l'envoi des émotions est réussi
