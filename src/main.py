@@ -25,6 +25,7 @@ def main():
             emotion = emotion_detector.detect(frame)
             if emotion:
                 gpio_controller.LED_color(emotion)
+                camera.emotion(emotion)
         except Exception as e:
             print(f"Erreur : {e}")
 

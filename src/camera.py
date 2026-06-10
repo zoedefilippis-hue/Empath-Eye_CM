@@ -1,7 +1,8 @@
 from picamera2 import Picamera2 #pour piloter la caméra
 import os #pour créer un fichier de sauvegarde
 import datetime #pour horodater le fichier
-from config import CAMERA_INDEX, CAMERA_WIDTH, CAMERA_HEIGHT, IMAGE_DIR, SAVE_IMAGE_DIR
+import json
+from config import CAMERA_INDEX, CAMERA_WIDTH, CAMERA_HEIGHT, IMAGE_DIR, SAVE_IMAGE_DIR, EMO_DIR, SAVE_EMO_DIR
 
 SD_ADRESS_IMAGE = IMAGE_DIR
 SD_ADRESS_SAVE_IMAGE = SAVE_IMAGE_DIR
@@ -68,6 +69,44 @@ class Camera:
         
         if not os.path.exists(filepath) or os.path.getsize(filepath) == 0:
             raise IOError (f"Fichier manquant ou vide {filepath}")
+        
+        return filepath
+    
+    def emotion(self, emotion=None):
+        
+        if not self.ready:
+            raise RuntimeError("Caméra non-initialisée")
+        
+        self.verify_sd()
+
+        if not os.path.exists(EMO_DIR):
+            os.makedirs(EMO_DIR, exist_ok=True)
+        
+        timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+        
+        filepath = os.path.join(EMO_DIR, f"emo_{timestamp}.json")
+        
+        with open(filepath, "w") as f:
+            json.dump({"emotion": emotion, "timestamp": timestamp}, f)
+        
+        return filepath
+    
+    def emotion_save(self, emotion=None):
+        
+        if not self.ready:
+            raise RuntimeError("Caméra non-initialisée")
+        
+        self.verify_sd()
+
+        if not os.path.exists(EMO_DIR):
+            os.makedirs(EMO_DIR, exist_ok=True)
+        
+        timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+        
+        filepath = os.path.join(SAVE_EMO_DIR, f"emo_{timestamp}.json")
+        
+        with open(filepath, "w") as f:
+            json.dump({"emotion": emotion, "timestamp": timestamp}, f)
         
         return filepath
 
