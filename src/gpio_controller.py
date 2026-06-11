@@ -3,6 +3,8 @@ import config
 import board
 import neopixel
 import camera
+import emotion_detector
+import cv2
 from gpiozero import Button
 from rpi_ws281x import PixelStrip, Color #librairie qui contrôle la LED
 from bluetooth import Bluetooth
@@ -27,7 +29,11 @@ def take_photo(channel = None):
         return
     try:
         filepath = _camera.capture_save()
-        camera.emotion_save()
+        frame = cv2.imread(filepath)
+        emotion = emotion_detector.detect(frame)
+        if emotion:
+            LED_color(emotion)
+            camera.emotion_save(emotion)
         print(f"Photo sauvegardée : {filepath}")
     except Exception as e :
         print(f"Erreur photo : {e}")
