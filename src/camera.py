@@ -108,6 +108,11 @@ class Camera:
         
         return filepath
     
+    def delete_image(self, filename=None):
+        filepath = os.path.join(IMAGE_DIR, filename)
+        if os.path.exists(filepath):
+            os.remove(filepath)
+    
     def stop(self): ##Pas sure de garder cette fonction
         if self.cam and self.ready:
             self.cam.stop()
