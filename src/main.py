@@ -23,6 +23,7 @@ def main():
             filepath = camera.capture()
             frame = cv2.imread(filepath)
             emotion = emotion_detector.detect(frame)
+            print(f"Émotion détectée : {emotion}")
             if emotion and emotion != "Neutral":
                 gpio_controller.LED_color(emotion)
                 camera.emotion(emotion)
