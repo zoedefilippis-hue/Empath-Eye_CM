@@ -92,7 +92,7 @@ class Camera:
     
     def save_emotion(self, emotion):
         os.makedirs(EMO_DIR, exist_ok=True)
-        filepath = os.path.join(SAVE_EMO_DIR, "emotions.json")
+        filepath = os.path.join(SAVE_EMO_DIR, "save_emotions.json")
         timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
         
         if os.path.exists(filepath):
