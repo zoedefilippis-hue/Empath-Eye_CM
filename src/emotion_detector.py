@@ -6,15 +6,18 @@ import cv2
 from config import MODEL_DIR
 
 class EmotionEfficientNet(nn.Module):
-    """Architecture de best_model_2.pth"""
     def __init__(self, num_classes=5):
         super().__init__()
-        self.backbone = models.efficientnet_b2(weights=None)
+        self.backbone = efficientnet_b2(weights=None)
+        for module in self.backbone.modules():
+            if hasattr(module, 'stochastic_depth'):
+                module.stochastic_depth.p = 0.3
+        in_features = self.backbone.classifier[1].in_features
         self.backbone.classifier = nn.Sequential(
-            nn.Dropout(0.2),
-            nn.Linear(1408, 256),
+            nn.Dropout(0.5),
+            nn.Linear(in_features, 256),
             nn.ReLU(),
-            nn.Dropout(0.2),
+            nn.Dropout(0.4),
             nn.Linear(256, num_classes)
         )
     def forward(self, x):
@@ -43,7 +46,7 @@ model.eval()
 emotion_labels = {0: "Happy", 1: "Surprise", 2: "Sad", 3: "Anger", 4: "Neutral"}
 
 transform = transforms.Compose([
-    transforms.Resize((224, 224)),
+    transforms.Resize((260, 260)),
     transforms.ToTensor(),
     transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
 ])
