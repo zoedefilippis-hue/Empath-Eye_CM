@@ -5,28 +5,43 @@ from PIL import Image
 import cv2
 from config import MODEL_DIR
 
-class EmotionResNet(nn.Module):
+class EmotionEfficientNet(nn.Module):
+    """Architecture de best_model_2.pth"""
     def __init__(self, num_classes=5):
         super().__init__()
-        #self.backbone = models.efficientnet_b2(weights=None)
-        self.backbone = models.resnet18(weights=None)
-        #self.backbone.classifier = nn.Sequential(
-        self.backbone.fc = nn.Sequential(
-            #nn.Dropout(0.2),
-            nn.Dropout(0.5),
-            #nn.Linear(1408, 256),
-            nn.Linear(512, 256),
+        self.backbone = models.efficientnet_b2(weights=None)
+        self.backbone.classifier = nn.Sequential(
+            nn.Dropout(0.2),
+            nn.Linear(1408, 256),
             nn.ReLU(),
-            #nn.Dropout(0.2),
-            nn.Dropout(0.3),
+            nn.Dropout(0.2),
             nn.Linear(256, num_classes)
         )
+    def forward(self, x):
+        return self.backbone(x)
 
+
+class EmotionResNet(nn.Module):
+    """Architecture de best_model.pth (ResNet18)"""
+    def __init__(self, num_classes=5):
+        super().__init__()
+        self.backbone = models.resnet18(weights=None)
+        in_features = self.backbone.fc.in_features  # 512 pour resnet18
+        self.backbone.fc = nn.Sequential(
+            nn.Dropout(0.2),
+            nn.Linear(in_features, 256),
+            nn.ReLU(),
+            nn.Dropout(0.2),
+            nn.Linear(256, num_classes)
+        )
     def forward(self, x):
         return self.backbone(x)
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-model = EmotionResNet(num_classes=5).to(device)
+if "best_model_2" in MODEL_DIR:
+    model = EmotionEfficientNet(num_classes=5).to(device)
+else:
+    model = EmotionResNet(num_classes=5).to(device)
 model.load_state_dict(torch.load(MODEL_DIR, map_location=device))
 model.eval()
 
