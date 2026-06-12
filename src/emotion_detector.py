@@ -8,20 +8,39 @@ from config import MODEL_DIR
 class EmotionResNet(nn.Module):
     def __init__(self, num_classes=5):
         super().__init__()
-        self.backbone = models.efficientnet_b2(weights=None)
-        self.backbone.classifier = nn.Sequential(
-            nn.Dropout(0.2),
-            nn.Linear(1408, 256),
+        #self.backbone = models.efficientnet_b2(weights=None)
+        self.backbone = models.resnet18(weights=None)
+        #self.backbone.classifier = nn.Sequential(
+        self.backbone.fc = nn.Sequential(
+            #nn.Dropout(0.2),
+            nn.Dropout(0.5),
+            #nn.Linear(1408, 256),
+            nn.Linear(512, 256),
             nn.ReLU(),
-            nn.Dropout(0.2),
+            #nn.Dropout(0.2),
+            nn.Dropout(0.3),
             nn.Linear(256, num_classes)
         )
+
     def forward(self, x):
         return self.backbone(x)
-    
+
+class EmotionResNet(nn.Module):
+    def __init__(self, num_classes=5):
+        super().__init__()
+        self.backbone = models.resnet18(weights=None) #couches neuronales qui reprend resnet
+        self.backbone.fc = nn.Sequential(
+            nn.Dropout(0.5),
+            nn.Linear(512, 256),
+            nn.ReLU(),
+            nn.Dropout(0.3),
+            nn.Linear(256, num_classes)
+        )
+
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 model = EmotionResNet(num_classes=5).to(device)
-model.load_state_dict(torch.load(MODEL_DIR, map_location=device))
+model.load_state_dict(torch.load(MODEL_
+DIR, map_location=device))
 model.eval()
 
 emotion_labels = {0: "Happy", 1: "Surprise", 2: "Sad", 3: "Anger", 4: "Neutral"}
