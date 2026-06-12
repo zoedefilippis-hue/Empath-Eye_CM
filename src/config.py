@@ -45,8 +45,8 @@ LED_INVERT = False
 #communication IA
 EMO_DIR = "/home/empatheye1/empatheye/emo/loop" #A MODIFIER AVEC L'ADRESSE DE LA CARTE SD
 SAVE_EMO_DIR = "/home/empatheye1/empatheye/emo/saved" #A MODIFIER AVEC L'ADRESSE DE LA CARTE SD
-#MODEL_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "best_model_2.pth")
-MODEL_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "best_model.pth")
+MODEL_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "best_model_2.pth")
+#MODEL_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "best_model.pth")
 
 #bluetooth
 BT_SHARE_DIR1 = EMO_DIR #endroit où le bluetooth va chercher des fichiers à transmettre

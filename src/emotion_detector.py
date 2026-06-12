@@ -5,20 +5,20 @@ from PIL import Image
 import cv2
 from config import MODEL_DIR
 
-#class EmotionEfficientNet(nn.Module):
-#    """Architecture de best_model_2.pth"""
-#    def __init__(self, num_classes=5):
-#        super().__init__()
-#        self.backbone = models.efficientnet_b2(weights=None)
-#        self.backbone.classifier = nn.Sequential(
-#            nn.Dropout(0.2),
-#            nn.Linear(1408, 256),
-#            nn.ReLU(),
-#            nn.Dropout(0.2),
-#            nn.Linear(256, num_classes)
-#        )
-#    def forward(self, x):
-#        return self.backbone(x)
+class EmotionEfficientNet(nn.Module):
+    """Architecture de best_model_2.pth"""
+    def __init__(self, num_classes=5):
+        super().__init__()
+        self.backbone = models.efficientnet_b2(weights=None)
+        self.backbone.classifier = nn.Sequential(
+            nn.Dropout(0.2),
+            nn.Linear(1408, 256),
+            nn.ReLU(),
+            nn.Dropout(0.2),
+            nn.Linear(256, num_classes)
+        )
+    def forward(self, x):
+        return self.backbone(x)
 
 class EmotionResNet(nn.Module):
     def __init__(self, num_classes=5):
@@ -35,8 +35,8 @@ class EmotionResNet(nn.Module):
         return self.backbone(x)
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-# model = EmotionEfficientNet(num_classes=5).to(device)
-model = EmotionResNet(num_classes=5).to(device)
+model = EmotionEfficientNet(num_classes=5).to(device)
+#model = EmotionResNet(num_classes=5).to(device)
 model.load_state_dict(torch.load(MODEL_DIR, map_location=device))
 model.eval()
 
