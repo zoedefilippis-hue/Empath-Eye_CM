@@ -20,18 +20,15 @@ from config import MODEL_DIR
 #    def forward(self, x):
 #        return self.backbone(x)
 
-
 class EmotionResNet(nn.Module):
-    """Architecture de best_model.pth (ResNet18)"""
     def __init__(self, num_classes=5):
         super().__init__()
-        self.backbone = models.resnet18(weights=None)
-        in_features = self.backbone.fc.in_features  # 512 pour resnet18
+        self.backbone = models.resnet18(weights=None) #couches neuronales qui reprend resnet
         self.backbone.fc = nn.Sequential(
-            nn.Dropout(0.2),
-            nn.Linear(in_features, 256),
+            nn.Dropout(0.5),
+            nn.Linear(512, 256),
             nn.ReLU(),
-            nn.Dropout(0.2),
+            nn.Dropout(0.3),
             nn.Linear(256, num_classes)
         )
     def forward(self, x):
