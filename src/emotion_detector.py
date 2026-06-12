@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 from torchvision import transforms, models
+from torchvision.models import efficientnet_b2
 from PIL import Image
 import cv2
 from config import MODEL_DIR
