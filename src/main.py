@@ -7,8 +7,12 @@ from camera import Camera
 from gpio_controller import bt
 from gpio_controller import add_shutdown_hook
 from config import init_gpio
+from bluetooth import Bluetooth
 
 init_gpio()
+
+bt = Bluetooth()#commande test
+bt.enable()#commande test
 
 camera = Camera()
 camera.start()
