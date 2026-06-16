@@ -4,7 +4,6 @@ import gpio_controller
 import emotion_detector
 import cv2
 from camera import Camera
-from gpio_controller import bt
 from gpio_controller import add_shutdown_hook
 from config import init_gpio
 from bluetooth import Bluetooth
