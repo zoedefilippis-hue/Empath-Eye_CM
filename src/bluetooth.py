@@ -188,7 +188,9 @@ class Bluetooth:
         
         self.stop_event.clear() #remets l'interrupteur partagé à False
         self.start_monitor() #lance le thread qui vérifie toutes les 3s que la connexion est maintenue 
+        print("[BLE] Demarrage du serveur GATT")
         self.start_gatt_server() #lance le thread qui verifie que le transfert est effectué correctement
+        print("[BLE] Serveur GATT demarre")
 
 
     def disable(self):
@@ -234,6 +236,7 @@ class Bluetooth:
  
         # Récupère le chemin de l'adaptateur hci0
         adapter_path = self.find_adapter(bus)
+        print(f"[BLE] Adaptateur trouvé : {adapter_path}")
         if not adapter_path:
             raise RuntimeError("[BLE] Adaptateur GATT introuvable sur dbus")
  
