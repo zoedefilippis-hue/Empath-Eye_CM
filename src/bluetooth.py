@@ -9,6 +9,8 @@ from gi.repository import GLib
 import time
 from config import BT_SHARE_DIR1, BT_SHARE_DIR2, IMAGE_DIR, SAVE_IMAGE_DIR
 
+dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
+
 CHUNK_SIZE = 490
 VERIF_INTERVAL = 3 #délai entre chaque vérification de connexion
 CHUNK_DELAY = 0.05
@@ -174,6 +176,8 @@ class Bluetooth:
         self.glib_thread   = None
         self.service       = None
         self.adv           = None
+        self.bus           = None         
+        self.gatt_registered = False 
 
 
 
@@ -198,17 +202,32 @@ class Bluetooth:
     def disable(self):
         self.stop_event.set() #stop les threads
         
-        if self.glib_loop:
-            self.glib_loop.quit()
-        if self.glib_thread:
-            self.glib_thread.join(timeout=5)
+            
+        if self.bus and self.adv:
+            try:
+                adapter_path = self.find_adapter(self.bus)
+                adv_manager = dbus.Interface(
+                    self.bus.get_object(BLUEZ_SERVICE, adapter_path), LE_ADV_MANAGER
+                )
+                adv_manager.UnregisterAdvertisement(BLEAdvertisement.PATH)
+            except Exception as e:
+                print(f"[BLE] Erreur unregister adv : {e}")
+            
+
+        # Unregister service GATT
+        if self.bus and self.service:
+            try:
+                adapter_path = self.find_adapter(self.bus)
+                gatt_manager = dbus.Interface(
+                    self.bus.get_object(BLUEZ_SERVICE, adapter_path), GATT_MANAGER_IFACE
+                )
+                gatt_manager.UnregisterApplication("/org/bluez/empahteye/service0")
+            except Exception as e:
+                print(f"[BLE] Erreur unregister GATT : {e}")
+
         if self.monitor_thread:
             self.monitor_thread.join(timeout=5)
-
-        self.glib_loop = None
-        self.glib_thread = None
-        self.service = None
-        self.adv = None
+        self.monitor_thread = None
 
         #subprocess: exécute des commandes Linux
         subprocess.run(["bluetoothctl", "discoverable", "off"], capture_output=True) #rend la carte invisible lors d'un scan bluetooth par les autres appareils
@@ -233,22 +252,21 @@ class Bluetooth:
             subprocess.run(["sudo", "hciconfig", "hci0", "up"], capture_output = True) #active le controleur
 
     def start_gatt_server(self):
-        dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
-        bus = dbus.SystemBus()
- 
-        # Récupère le chemin de l'adaptateur hci0
-        adapter_path = self.find_adapter(bus)
+        if self.bus is None:
+            self.bus = dbus.SystemBus()
+
+        adapter_path = self.find_adapter(self.bus)
         print(f"[BLE] Adaptateur trouvé : {adapter_path}")
         if not adapter_path:
             raise RuntimeError("[BLE] Adaptateur GATT introuvable sur dbus")
- 
-        # Crée le service GATT et l'advertisement
-        self.service = GattService(bus, self)
-        self.adv     = BLEAdvertisement(bus)
- 
-        # Enregistre le service GATT auprès de BlueZ
+
+        # Crée les objets seulement s'ils n'existent pas déjà
+        if self.service is None:
+            self.service = GattService(self.bus, self)
+            self.adv = BLEAdvertisement(self.bus)
+
         gatt_manager = dbus.Interface(
-            bus.get_object(BLUEZ_SERVICE, adapter_path), GATT_MANAGER_IFACE
+            self.bus.get_object(BLUEZ_SERVICE, adapter_path), GATT_MANAGER_IFACE
         )
         gatt_manager.RegisterApplication(
             "/org/bluez/empahteye/service0",
@@ -256,10 +274,9 @@ class Bluetooth:
             reply_handler=lambda: print("[BLE] Service GATT enregistré"),
             error_handler=lambda e: print(f"[BLE] Erreur GATT : {e}")
         )
- 
-        # Enregistre l'advertisement BLE
+
         adv_manager = dbus.Interface(
-            bus.get_object(BLUEZ_SERVICE, adapter_path), LE_ADV_MANAGER
+            self.bus.get_object(BLUEZ_SERVICE, adapter_path), LE_ADV_MANAGER
         )
         adv_manager.RegisterAdvertisement(
             BLEAdvertisement.PATH,
@@ -267,13 +284,11 @@ class Bluetooth:
             reply_handler=lambda: print("[BLE] Advertisement BLE enregistré"),
             error_handler=lambda e: print(f"[BLE] Erreur advertisement : {e}")
         )
- 
-        # Lance la boucle GLib dans un thread dédié
-        self.glib_loop   = GLib.MainLoop()
-        self.glib_thread = threading.Thread(
-            target=self.glib_loop.run, daemon=True
-        )
-        self.glib_thread.start()
+
+        if self.glib_loop is None:
+            self.glib_loop = GLib.MainLoop()
+            self.glib_thread = threading.Thread(target=self.glib_loop.run, daemon=True)
+            self.glib_thread.start()
 
     def find_adapter(self, bus):
         """Retourne le chemin dbus de l'adaptateur hci0."""
