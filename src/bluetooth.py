@@ -7,7 +7,6 @@ import time
 
 VERIF_INTERVAL = 3  # délai entre chaque vérification de connexion
 
-# Chemin du script BLE autonome, dans le même dossier que ce fichier
 BLE_SERVER_SCRIPT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "ble_server.py")
 
 
@@ -40,9 +39,6 @@ class Bluetooth:
         self.start_monitor()
 
         print("[BLE] Démarrage du serveur GATT (processus séparé)", flush=True)
-        # Lance ble_server.py comme processus indépendant.
-        # IMPORTANT : ce sous-processus contient toute la logique GLib/D-Bus,
-        # qui ne tourne donc plus jamais dans le même processus que gpiozero.
         self.ble_process = subprocess.Popen(
             [sys.executable, "-u", BLE_SERVER_SCRIPT],  # -u = sortie non bufferisée
             cwd=os.path.dirname(BLE_SERVER_SCRIPT),

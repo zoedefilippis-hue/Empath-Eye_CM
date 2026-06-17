@@ -57,7 +57,10 @@ class BLEAdvertisement(dbus.service.Object):
 
     def get_props(self):
         return {
-            "Type": dbus.String("peripheral"),
+            "Type":           dbus.String("peripheral"),
+            "ServiceUUIDs":   dbus.Array([SERVICE_UUID], signature="s"),
+            "LocalName":      dbus.String("EmpathEye"),
+            "IncludeTxPower": dbus.Boolean(True),
         }
 
     @dbus.service.method(LE_ADV_IFACE)
@@ -181,6 +184,29 @@ class BleServer:
         if not self.adapter_path:
             raise RuntimeError("[BLE] Adaptateur GATT introuvable sur dbus")
 
+        # Nettoyage défensif : si un cycle précédent a mal terminé (process
+        # tué sans passer par stop()), BlueZ peut encore croire qu'une
+        # application/advertisement est enregistrée sur ce même chemin.
+        # On tente de la désenregistrer avant de repartir, en ignorant
+        # silencieusement l'échec si rien n'était enregistré.
+        try:
+            gatt_manager_cleanup = dbus.Interface(
+                self.bus.get_object(BLUEZ_SERVICE, self.adapter_path), GATT_MANAGER_IFACE
+            )
+            gatt_manager_cleanup.UnregisterApplication(APP_PATH)
+            print("[BLE] Ancienne application GATT nettoyée", flush=True)
+        except Exception:
+            pass  # rien à nettoyer, c'est le cas normal
+
+        try:
+            adv_manager_cleanup = dbus.Interface(
+                self.bus.get_object(BLUEZ_SERVICE, self.adapter_path), LE_ADV_MANAGER
+            )
+            adv_manager_cleanup.UnregisterAdvertisement(BLEAdvertisement.PATH)
+            print("[BLE] Ancien advertisement nettoyé", flush=True)
+        except Exception:
+            pass  # rien à nettoyer, c'est le cas normal
+
         self.service = GattService(self.bus, self)
         self.adv = BLEAdvertisement(self.bus)
 
@@ -280,6 +306,7 @@ class BleServer:
 
 def main():
     server = BleServer()
+    server.loop = GLib.MainLoop()
 
     def handle_signal():
         try:
@@ -292,22 +319,25 @@ def main():
             print(f"[BLE-SUBPROCESS] EXCEPTION dans handle_signal : {e}", flush=True)
             traceback.print_exc(file=sys.stdout)
             sys.stdout.flush()
-            # En dernier recours, on force la sortie du process
             os._exit(1)
-        return False  # ne pas réenregistrer la source
+        return False
 
-    server.start()
-    server.loop = GLib.MainLoop()
-
-    # GLib.unix_signal_add intègre l'écoute du signal directement dans la
-    # boucle d'événements GLib. Contrairement à signal.signal(), le handler
-    # est garanti de s'exécuter même pendant que loop.run() est actif.
-    # On l'enregistre maintenant que server.loop existe déjà.
     GLib.unix_signal_add(GLib.PRIORITY_HIGH, signal.SIGTERM, handle_signal)
     GLib.unix_signal_add(GLib.PRIORITY_HIGH, signal.SIGINT, handle_signal)
 
-    print("[BLE-SUBPROCESS] Handlers de signal enregistrés, lancement loop.run()", flush=True)
-    server.loop.run()
+    # IMPORTANT : la boucle GLib doit tourner AVANT RegisterApplication.
+    # BlueZ rappelle l'application (GetManagedObjects) pendant l'enregistrement ;
+    # sans boucle active pour traiter cet appel entrant, BlueZ échoue avec
+    # "No object received".
+    glib_thread = threading.Thread(target=server.loop.run, daemon=True)
+    glib_thread.start()
+    time.sleep(0.3)  # laisse le temps à la loop de démarrer réellement
+
+    print("[BLE-SUBPROCESS] Loop GLib démarrée, appel de server.start()", flush=True)
+    server.start()
+
+    # On attend ici que la loop se termine (déclenché par handle_signal → server.stop() → loop.quit())
+    glib_thread.join()
 
     print("[BLE] Processus BLE terminé", flush=True)
 
