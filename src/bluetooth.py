@@ -44,8 +44,10 @@ class Bluetooth:
         # IMPORTANT : ce sous-processus contient toute la logique GLib/D-Bus,
         # qui ne tourne donc plus jamais dans le même processus que gpiozero.
         self.ble_process = subprocess.Popen(
-            [sys.executable, BLE_SERVER_SCRIPT],
+            [sys.executable, "-u", BLE_SERVER_SCRIPT],  # -u = sortie non bufferisée
             cwd=os.path.dirname(BLE_SERVER_SCRIPT),
+            stdout=None,  # hérite explicitement du stdout du parent
+            stderr=None,  # hérite explicitement du stderr du parent
         )
         print(f"[BLE] Processus BLE lancé (pid={self.ble_process.pid})", flush=True)
 
@@ -55,11 +57,19 @@ class Bluetooth:
         self.stop_event.set()
 
         if self.ble_process is not None:
-            print(f"[BLE] Arrêt du processus BLE (pid={self.ble_process.pid})", flush=True)
-            self.ble_process.send_signal(signal.SIGTERM)
+            pid = self.ble_process.pid
+            print(f"[BLE] Arrêt du processus BLE (pid={pid})", flush=True)
+            print(f"[BLE] poll() avant signal : {self.ble_process.poll()}", flush=True)
+            try:
+                self.ble_process.send_signal(signal.SIGTERM)
+                print(f"[BLE] SIGTERM envoyé avec succès à pid={pid}", flush=True)
+            except Exception as e:
+                print(f"[BLE] ERREUR lors de l'envoi du signal : {e}", flush=True)
             try:
                 self.ble_process.wait(timeout=5)
+                print(f"[BLE] Processus {pid} terminé proprement, code={self.ble_process.returncode}", flush=True)
             except subprocess.TimeoutExpired:
+                print(f"[BLE] poll() après timeout : {self.ble_process.poll()}", flush=True)
                 print("[BLE] Le processus ne répond pas, kill forcé", flush=True)
                 self.ble_process.kill()
                 self.ble_process.wait(timeout=5)

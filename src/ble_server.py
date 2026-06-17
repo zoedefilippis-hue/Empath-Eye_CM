@@ -203,26 +203,33 @@ class BleServer:
             print(f"[BLE] Erreur advertisement : {e}", flush=True)
 
     def stop(self):
+        print("[BLE-SUBPROCESS] stop() - début", flush=True)
         if self.bus and self.adv:
             try:
+                print("[BLE-SUBPROCESS] stop() - unregister advertisement...", flush=True)
                 adv_manager = dbus.Interface(
                     self.bus.get_object(BLUEZ_SERVICE, self.adapter_path), LE_ADV_MANAGER
                 )
                 adv_manager.UnregisterAdvertisement(BLEAdvertisement.PATH)
+                print("[BLE-SUBPROCESS] stop() - advertisement désenregistrée", flush=True)
             except Exception as e:
                 print(f"[BLE] Erreur unregister adv : {e}", flush=True)
 
         if self.bus and self.service:
             try:
+                print("[BLE-SUBPROCESS] stop() - unregister GATT...", flush=True)
                 gatt_manager = dbus.Interface(
                     self.bus.get_object(BLUEZ_SERVICE, self.adapter_path), GATT_MANAGER_IFACE
                 )
                 gatt_manager.UnregisterApplication(APP_PATH)
+                print("[BLE-SUBPROCESS] stop() - GATT désenregistré", flush=True)
             except Exception as e:
                 print(f"[BLE] Erreur unregister GATT : {e}", flush=True)
 
+        print("[BLE-SUBPROCESS] stop() - avant loop.quit()", flush=True)
         if self.loop:
             self.loop.quit()
+        print("[BLE-SUBPROCESS] stop() - fin", flush=True)
 
     def send_all_files(self):
         if not self.service:
@@ -275,19 +282,31 @@ def main():
     server = BleServer()
 
     def handle_signal():
-        print("[BLE] Signal d'arrêt reçu, nettoyage...", flush=True)
-        server.stop()
+        try:
+            print("[BLE-SUBPROCESS] handle_signal() appelé !", flush=True)
+            print("[BLE] Signal d'arrêt reçu, nettoyage...", flush=True)
+            server.stop()
+            print("[BLE-SUBPROCESS] server.stop() terminé", flush=True)
+        except Exception as e:
+            import traceback
+            print(f"[BLE-SUBPROCESS] EXCEPTION dans handle_signal : {e}", flush=True)
+            traceback.print_exc(file=sys.stdout)
+            sys.stdout.flush()
+            # En dernier recours, on force la sortie du process
+            os._exit(1)
         return False  # ne pas réenregistrer la source
+
+    server.start()
+    server.loop = GLib.MainLoop()
 
     # GLib.unix_signal_add intègre l'écoute du signal directement dans la
     # boucle d'événements GLib. Contrairement à signal.signal(), le handler
     # est garanti de s'exécuter même pendant que loop.run() est actif.
+    # On l'enregistre maintenant que server.loop existe déjà.
     GLib.unix_signal_add(GLib.PRIORITY_HIGH, signal.SIGTERM, handle_signal)
     GLib.unix_signal_add(GLib.PRIORITY_HIGH, signal.SIGINT, handle_signal)
 
-    server.start()
-
-    server.loop = GLib.MainLoop()
+    print("[BLE-SUBPROCESS] Handlers de signal enregistrés, lancement loop.run()", flush=True)
     server.loop.run()
 
     print("[BLE] Processus BLE terminé", flush=True)
