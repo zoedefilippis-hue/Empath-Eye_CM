@@ -15,7 +15,7 @@ shutdown_hooks = []
 
 # BTN_CAM
 
-btn_save = Button(config.PIN_MAP["BTN_SAVE"], pull_up=True)
+btn_save = Button(config.PIN_MAP["BTN_SAVE"], pull_up=False)
 
 _camera = None
 
@@ -43,21 +43,21 @@ btn_save.when_pressed = take_photo
 
 # BLUETOOTH
 
-#bt = Bluetooth()
-#btn_bt_on = Button(config.PIN_MAP["BTN_BT_ON"], pull_up=True)
-#btn_bt_off = Button(config.PIN_MAP["BTN_BT_OFF"], pull_up=True)
+bt = Bluetooth()
+btn_bt_on = Button(config.PIN_MAP["BTN_BT_ON"], pull_up=True)
+btn_bt_off = Button(config.PIN_MAP["BTN_BT_OFF"], pull_up=True)
 
-#def bluetooth_ON(channel=None):
-#    bt.enable()
+def bluetooth_ON(channel=None):
+    bt.enable()
 
-#def bluetooth_OFF(channel=None):
-#    bt.disable()
+def bluetooth_OFF(channel=None):
+    bt.disable()
 
-#btn_bt_on.when_pressed = bluetooth_ON
-#btn_bt_off.when_pressed = bluetooth_OFF
+btn_bt_on.when_pressed = bluetooth_ON
+btn_bt_off.when_pressed = bluetooth_OFF
 
 # OFF
-btn_power_off = Button(config.PIN_MAP["BTN_POWER_OFF"], pull_up=True)
+btn_power_off = Button(config.PIN_MAP["BTN_POWER_OFF"], pull_up=False)
 
 def add_shutdown_hook(fn):
     shutdown_hooks.append(fn)

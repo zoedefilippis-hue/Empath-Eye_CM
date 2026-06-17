@@ -6,10 +6,12 @@ import dbus
 import dbus.service
 import dbus.mainloop.glib
 from gi.repository import GLib
+import time
 from config import BT_SHARE_DIR1, BT_SHARE_DIR2, IMAGE_DIR, SAVE_IMAGE_DIR
 
 CHUNK_SIZE = 490
 VERIF_INTERVAL = 3 #délai entre chaque vérification de connexion
+CHUNK_DELAY = 0.05
 
 SERVICE_UUID = "948c621a-6017-443d-8f75-fd00cf7af340" #UUID de service qui assure la connexion
 CHAR_TRANSFER = "fbd3e679-420f-4027-86ac-528d8251ae94" #UUID qui transmet les données
@@ -307,6 +309,7 @@ class Bluetooth:
  
                 # 1. Métadonnées
                 char.notify_meta(filename, filesize)
+                time.sleep(CHUNK_DELAY)
                 print(f"[BLE] Envoi fichier : {filename} ({filesize} octets)")
  
                 # 2. Chunks
@@ -316,6 +319,7 @@ class Bluetooth:
                         if not chunk:
                             break
                         char.notify_chunk(chunk)
+                        time.sleep(CHUNK_DELAY)
  
                 print(f"[BLE] Fichier envoyé : {filename}")
  
