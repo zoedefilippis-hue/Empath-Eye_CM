@@ -274,20 +274,21 @@ class BleServer:
 def main():
     server = BleServer()
 
-    def handle_sigterm(signum, frame):
+    def handle_signal():
         print("[BLE] Signal d'arrêt reçu, nettoyage...", flush=True)
         server.stop()
+        return False  # ne pas réenregistrer la source
 
-    signal.signal(signal.SIGTERM, handle_sigterm)
-    signal.signal(signal.SIGINT, handle_sigterm)
+    # GLib.unix_signal_add intègre l'écoute du signal directement dans la
+    # boucle d'événements GLib. Contrairement à signal.signal(), le handler
+    # est garanti de s'exécuter même pendant que loop.run() est actif.
+    GLib.unix_signal_add(GLib.PRIORITY_HIGH, signal.SIGTERM, handle_signal)
+    GLib.unix_signal_add(GLib.PRIORITY_HIGH, signal.SIGINT, handle_signal)
 
     server.start()
 
     server.loop = GLib.MainLoop()
-    try:
-        server.loop.run()
-    except KeyboardInterrupt:
-        server.stop()
+    server.loop.run()
 
     print("[BLE] Processus BLE terminé", flush=True)
 
