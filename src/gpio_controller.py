@@ -44,8 +44,8 @@ btn_save.when_pressed = take_photo
 # BLUETOOTH
 
 bt = Bluetooth()
-btn_bt_on = Button(config.PIN_MAP["BTN_BT_ON"], pull_up=True)
-btn_bt_off = Button(config.PIN_MAP["BTN_BT_OFF"], pull_up=True)
+btn_bt_on = Button(config.PIN_MAP["BTN_BT_ON"], pull_up=True, bounce_time=0.2)
+btn_bt_off = Button(config.PIN_MAP["BTN_BT_OFF"], pull_up=True, bounce_time=0.2)
 
 def bluetooth_ON(channel=None):
     bt.enable()

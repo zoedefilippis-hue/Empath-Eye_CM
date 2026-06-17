@@ -52,9 +52,6 @@ class BLEAdvertisement(dbus.service.Object):
     def get_props(self):
         return {
             "Type":           dbus.String("peripheral"),
-            "ServiceUUIDs":   dbus.Array([SERVICE_UUID], signature="s"),
-            "LocalName":      dbus.String("Empath'Eye"),
-            "IncludeTxPower": dbus.Boolean(True),
         }
 
     @dbus.service.method(LE_ADV_IFACE)
@@ -182,11 +179,16 @@ class Bluetooth:
 
 
     def enable(self):
+        if self.glib_loop is not None:  # ← déjà démarré, on skip
+            return
+        
         self.ensure_bt_service() #vérifie que le service bluetooth tourne et que l'adapteur est disponible
         
         #capture_output=True permet de ne pas regarder la sortie de la commande
         subprocess.run(["bluetoothctl", "select", "hci0"], capture_output=True) #force l'utilisation de l'adapteur
         subprocess.run(["bluetoothctl", "power", "on"], capture_output=True) #allume le module bluetooth
+        subprocess.run(["sudo", "btmgmt", "advertising", "on"], capture_output=True)
+        time.sleep(0.3)
         subprocess.run(["bluetoothctl", "discoverable", "on"], capture_output=True) #rend la carte visible lors d'un scan bluetooth par les autres appareils
         subprocess.run(["bluetoothctl", "pairable", "on"], capture_output=True) #autorise la carte à accepter de nouveaux appairages
         subprocess.run(["bluetoothctl", "agent", "NoInputNoOutput"], capture_output=True) #type d'appairage sans écran ni clavier
@@ -200,6 +202,9 @@ class Bluetooth:
 
 
     def disable(self):
+        if self.glib_loop is None:
+            return
+        
         self.stop_event.set() #stop les threads
         
             
@@ -260,45 +265,43 @@ class Bluetooth:
         if not adapter_path:
             raise RuntimeError("[BLE] Adaptateur GATT introuvable sur dbus")
 
-        # Crée les objets seulement s'ils n'existent pas déjà
         if self.service is None:
             self.service = GattService(self.bus, self)
             self.adv = BLEAdvertisement(self.bus)
 
-        gatt_manager = dbus.Interface(
-            self.bus.get_object(BLUEZ_SERVICE, adapter_path), GATT_MANAGER_IFACE
-        )
-        gatt_manager.RegisterApplication(
-            "/org/bluez/empahteye/service0",
-            {},
-            reply_handler=lambda: print("[BLE] Service GATT enregistré"),
-            error_handler=lambda e: print(f"[BLE] Erreur GATT : {e}")
-        )
-
-        adv_manager = dbus.Interface(
-            self.bus.get_object(BLUEZ_SERVICE, adapter_path), LE_ADV_MANAGER
-        )
-        adv_manager.RegisterAdvertisement(
-            BLEAdvertisement.PATH,
-            {},
-            reply_handler=lambda: print("[BLE] Advertisement BLE enregistré"),
-            error_handler=lambda e: print(f"[BLE] Erreur advertisement : {e}")
-        )
-
+        # ← Lance la GLib loop EN PREMIER
         if self.glib_loop is None:
             self.glib_loop = GLib.MainLoop()
             self.glib_thread = threading.Thread(target=self.glib_loop.run, daemon=True)
             self.glib_thread.start()
+            time.sleep(0.3)  # laisse le temps à la loop de démarrer
 
-    def find_adapter(self, bus):
-        """Retourne le chemin dbus de l'adaptateur hci0."""
-        manager = dbus.Interface(
-            bus.get_object(BLUEZ_SERVICE, "/"), DBUS_OM_IFACE
+        gatt_manager = dbus.Interface(
+            self.bus.get_object(BLUEZ_SERVICE, adapter_path), GATT_MANAGER_IFACE
         )
-        for path, ifaces in manager.GetManagedObjects().items():
-            if BLUEZ_ADAPTER_IFACE in ifaces:
-                return path
-        return None
+        try:
+            gatt_manager.RegisterApplication("/org/bluez/empahteye/service0", {})
+            print("[BLE] Service GATT enregistré")
+        except dbus.exceptions.DBusException as e:
+            print(f"[BLE] Erreur GATT : {e}")
+
+        adv_manager = dbus.Interface(
+            self.bus.get_object(BLUEZ_SERVICE, adapter_path), LE_ADV_MANAGER
+        )
+        try:
+            adv_manager.RegisterAdvertisement(BLEAdvertisement.PATH, {})
+            print("[BLE] Advertisement BLE enregistré")
+        except dbus.exceptions.DBusException as e:
+            print(f"[BLE] Erreur advertisement : {e}")
+        def find_adapter(self, bus):
+            """Retourne le chemin dbus de l'adaptateur hci0."""
+            manager = dbus.Interface(
+                bus.get_object(BLUEZ_SERVICE, "/"), DBUS_OM_IFACE
+            )
+            for path, ifaces in manager.GetManagedObjects().items():
+                if BLUEZ_ADAPTER_IFACE in ifaces:
+                    return path
+            return None
 
 
     def send_all_files(self):
