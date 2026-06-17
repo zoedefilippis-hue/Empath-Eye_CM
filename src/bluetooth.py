@@ -202,7 +202,9 @@ class Bluetooth:
 
 
     def disable(self):
+        print("[BLE] disable() appelé")
         if self.glib_loop is None:
+            print("[BLE] glib_loop est None, sortie anticipée")
             return
         
         self.stop_event.set() #stop les threads
@@ -240,6 +242,11 @@ class Bluetooth:
         subprocess.run(["bluetoothctl", "power", "off"], capture_output=True) #éteint le module bluetooth
         self.connected = False #remet la connexion à False
 
+        self.glib_loop = None
+        self.glib_thread = None
+        self.service = None
+        self.adv = None
+        self.bus = None
     
     
     def ensure_bt_service(self): #vérifie que le service bluetooth tourne et que l'adapteur est disponible
@@ -269,7 +276,6 @@ class Bluetooth:
             self.service = GattService(self.bus, self)
             self.adv = BLEAdvertisement(self.bus)
 
-        # ← Lance la GLib loop EN PREMIER
         if self.glib_loop is None:
             self.glib_loop = GLib.MainLoop()
             self.glib_thread = threading.Thread(target=self.glib_loop.run, daemon=True)
@@ -293,15 +299,16 @@ class Bluetooth:
             print("[BLE] Advertisement BLE enregistré")
         except dbus.exceptions.DBusException as e:
             print(f"[BLE] Erreur advertisement : {e}")
-        def find_adapter(self, bus):
-            """Retourne le chemin dbus de l'adaptateur hci0."""
-            manager = dbus.Interface(
-                bus.get_object(BLUEZ_SERVICE, "/"), DBUS_OM_IFACE
-            )
-            for path, ifaces in manager.GetManagedObjects().items():
-                if BLUEZ_ADAPTER_IFACE in ifaces:
-                    return path
-            return None
+    
+    def find_adapter(self, bus):
+        """Retourne le chemin dbus de l'adaptateur hci0."""
+        manager = dbus.Interface(
+        bus.get_object(BLUEZ_SERVICE, "/"), DBUS_OM_IFACE
+        )
+        for path, ifaces in manager.GetManagedObjects().items():
+            if BLUEZ_ADAPTER_IFACE in ifaces:
+                return path
+        return None
 
 
     def send_all_files(self):

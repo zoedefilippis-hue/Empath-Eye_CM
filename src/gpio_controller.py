@@ -51,6 +51,7 @@ def bluetooth_ON(channel=None):
     bt.enable()
 
 def bluetooth_OFF(channel=None):
+    print("[BTN] Bouton OFF appuyé")
     bt.disable()
 
 btn_bt_on.when_pressed = bluetooth_ON
