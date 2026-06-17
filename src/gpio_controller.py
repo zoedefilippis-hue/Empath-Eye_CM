@@ -47,7 +47,12 @@ bt = Bluetooth()
 btn_bt_on = Button(config.PIN_MAP["BTN_BT_ON"], pull_up=True, bounce_time=0.2)
 btn_bt_off = Button(config.PIN_MAP["BTN_BT_OFF"], pull_up=True, bounce_time=0.2)
 
+print(f"[DEBUG] État initial BT_ON (17) : {'fermé' if btn_bt_on.is_pressed else 'ouvert'}")
+print(f"[DEBUG] État initial BT_OFF (27) : {'fermé' if btn_bt_off.is_pressed else 'ouvert'}")
+
+
 def bluetooth_ON(channel=None):
+    print("[BTN] Bouton ON appuyé")
     bt.enable()
 
 def bluetooth_OFF(channel=None):
