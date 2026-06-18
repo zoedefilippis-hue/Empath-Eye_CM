@@ -222,7 +222,7 @@ class BleServer:
             self.bus.get_object(BLUEZ_SERVICE, self.adapter_path), GATT_MANAGER_IFACE
         )
         try:
-            gatt_manager.RegisterApplication(Application.PATH, {})
+            gatt_manager.RegisterApplication(Application.PATH, dbus.Dictionary({}, signature="sv"))
             print("[BLE] Service GATT enregistré", flush=True)
         except dbus.exceptions.DBusException as e:
             print(f"[BLE] Erreur GATT : {e}", flush=True)
@@ -232,7 +232,7 @@ class BleServer:
             self.bus.get_object(BLUEZ_SERVICE, self.adapter_path), LE_ADV_MANAGER
         )
         try:
-            adv_manager.RegisterAdvertisement(BLEAdvertisement.PATH, {})
+            adv_manager.RegisterAdvertisement(BLEAdvertisement.PATH, dbus.Dictionary({}, signature="sv"))
             print("[BLE] Advertisement BLE enregistré", flush=True)
         except dbus.exceptions.DBusException as e:
             print(f"[BLE] Erreur advertisement : {e}", flush=True)
