@@ -2,7 +2,7 @@ from picamera2 import Picamera2 #pour piloter la caméra
 import os #pour créer un fichier de sauvegarde
 import datetime #pour horodater le fichier
 import json
-from config import CAMERA_INDEX, CAMERA_WIDTH, CAMERA_HEIGHT, IMAGE_DIR, SAVE_IMAGE_DIR, EMO_DIR, SAVE_EMO_DIR
+from config import CAMERA_INDEX, CAMERA_WIDTH, CAMERA_HEIGHT, IMAGE_DIR, SAVE_IMAGE_DIR, EMO_DIR
 
 SD_ADRESS_IMAGE = IMAGE_DIR
 SD_ADRESS_SAVE_IMAGE = SAVE_IMAGE_DIR
@@ -83,7 +83,7 @@ class Camera:
         else:
             data = []
         
-        data.append({"emotion": emotion, "timestamp": timestamp})
+        data.append({"emotion": emotion, "timestamp": timestamp, "saved?": False})
         
         with open(filepath, "w") as f:
             json.dump(data, f)
@@ -92,7 +92,7 @@ class Camera:
     
     def save_emotion(self, emotion):
         os.makedirs(EMO_DIR, exist_ok=True)
-        filepath = os.path.join(SAVE_EMO_DIR, "save_emotions.json")
+        filepath = os.path.join(EMO_DIR, "emotions.json")
         timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
         
         if os.path.exists(filepath):
@@ -101,7 +101,7 @@ class Camera:
         else:
             data = []
         
-        data.append({"emotion": emotion, "timestamp": timestamp})
+        data.append({"emotion": emotion, "timestamp": timestamp, "Saved?": True})
         
         with open(filepath, "w") as f:
             json.dump(data, f)

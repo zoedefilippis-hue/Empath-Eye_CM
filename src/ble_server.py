@@ -10,7 +10,7 @@ import dbus.service
 import dbus.mainloop.glib
 from gi.repository import GLib
 
-from config import BT_SHARE_DIR1, BT_SHARE_DIR2, IMAGE_DIR, SAVE_IMAGE_DIR
+from config import EMO_DIR, IMAGE_DIR, SAVE_IMAGE_DIR
 
 CHUNK_SIZE = 490
 CHUNK_DELAY = 0.05
@@ -20,7 +20,7 @@ SERVICE_UUID  = "948c621a-6017-443d-8f75-fd00cf7af340"
 CHAR_TRANSFER = "fbd3e679-420f-4027-86ac-528d8251ae94"
 CHAR_COMMAND  = "5ef1754d-6049-4a93-a80e-9f162316b6ae"
 
-DIRS_TO_CLEAR = [BT_SHARE_DIR1, BT_SHARE_DIR2, IMAGE_DIR, SAVE_IMAGE_DIR]
+DIRS_TO_CLEAR = [EMO_DIR, IMAGE_DIR, SAVE_IMAGE_DIR]
 
 BLUEZ_SERVICE       = "org.bluez"
 BLUEZ_ADAPTER_IFACE = "org.bluez.Adapter1"
@@ -273,8 +273,7 @@ class BleServer:
         if not self.app:
             return
         char = self.app.service.char_transfer
-        dirs = [BT_SHARE_DIR1, BT_SHARE_DIR2]
-        for directory in dirs:
+        for directory in EMO_DIR:
             if not os.path.exists(directory):
                 continue
             for filename in sorted(os.listdir(directory)):
