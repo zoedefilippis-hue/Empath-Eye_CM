@@ -217,25 +217,31 @@ class BleServer:
         self.app = Application(self.bus, self)
         self.adv = BLEAdvertisement(self.bus)
 
-        # Enregistrement GATT
+        # --- Enregistrement GATT (asynchrone) ---
+        # RegisterApplication est asynchrone OBLIGATOIREMENT : BlueZ rappelle
+        # GetManagedObjects pendant l'appel. Si on bloque le thread principal
+        # (qui est aussi la GLib loop) avec un appel synchrone, la loop ne peut
+        # pas traiter ce callback entrant → deadlock → "No object received".
         gatt_manager = dbus.Interface(
             self.bus.get_object(BLUEZ_SERVICE, self.adapter_path), GATT_MANAGER_IFACE
         )
-        try:
-            gatt_manager.RegisterApplication(Application.PATH, dbus.Dictionary({}, signature="sv"))
-            print("[BLE] Service GATT enregistré", flush=True)
-        except dbus.exceptions.DBusException as e:
-            print(f"[BLE] Erreur GATT : {e}", flush=True)
+        gatt_manager.RegisterApplication(
+            Application.PATH,
+            dbus.Dictionary({}, signature="sv"),
+            reply_handler=lambda: print("[BLE] Service GATT enregistré", flush=True),
+            error_handler=lambda e: print(f"[BLE] Erreur GATT : {e}", flush=True),
+        )
 
-        # Enregistrement advertisement
+        # --- Enregistrement advertisement (asynchrone) ---
         adv_manager = dbus.Interface(
             self.bus.get_object(BLUEZ_SERVICE, self.adapter_path), LE_ADV_MANAGER
         )
-        try:
-            adv_manager.RegisterAdvertisement(BLEAdvertisement.PATH, dbus.Dictionary({}, signature="sv"))
-            print("[BLE] Advertisement BLE enregistré", flush=True)
-        except dbus.exceptions.DBusException as e:
-            print(f"[BLE] Erreur advertisement : {e}", flush=True)
+        adv_manager.RegisterAdvertisement(
+            BLEAdvertisement.PATH,
+            dbus.Dictionary({}, signature="sv"),
+            reply_handler=lambda: print("[BLE] Advertisement BLE enregistré", flush=True),
+            error_handler=lambda e: print(f"[BLE] Erreur advertisement : {e}", flush=True),
+        )
 
     def stop(self):
         print("[BLE-SUBPROCESS] stop() - début", flush=True)
