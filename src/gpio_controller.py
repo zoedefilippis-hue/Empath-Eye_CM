@@ -87,13 +87,13 @@ def set_color(r,g,b):
     pixel[0] = (r, g, b)
 
 def LED_color(emotion):
-    if emotion == "happy":
+    if emotion == "joie":
         set_color(255, 255, 0)
-    elif emotion == "anger":
+    elif emotion == "colere":
         set_color(255, 0, 0)
     elif emotion == "surprise":
         set_color(128, 0, 128)
-    elif emotion == "sad":
+    elif emotion == "tristesse":
         set_color(0, 0, 255)
-    elif emotion == "neutral":
+    elif emotion == "neutre":
         set_color(180, 180, 180)
