@@ -273,13 +273,12 @@ class BleServer:
         if not self.app:
             return
         char = self.app.service.char_transfer
-        for directory in EMO_DIR:
-            if not os.path.exists(directory):
-                continue
-            for filename in sorted(os.listdir(directory)):
+        
+        if os.path.exists(EMO_DIR):
+            for filename in sorted(os.listdir(EMO_DIR)):
                 if not filename.endswith(".json"):
                     continue
-                filepath = os.path.join(directory, filename)
+                filepath = os.path.join(EMO_DIR, filename)
                 filesize = os.path.getsize(filepath)
                 char.notify_meta(filename, filesize)
                 time.sleep(CHUNK_DELAY)
