@@ -10,8 +10,6 @@ import dbus.service
 import dbus.mainloop.glib
 from gi.repository import GLib
 
-# On importe la config directement (le script est lancé avec le même
-# répertoire de travail / PYTHONPATH que le reste du projet)
 from config import BT_SHARE_DIR1, BT_SHARE_DIR2, IMAGE_DIR, SAVE_IMAGE_DIR
 
 CHUNK_SIZE = 490
@@ -32,8 +30,6 @@ LE_ADV_MANAGER      = "org.bluez.LEAdvertisingManager1"
 LE_ADV_IFACE        = "org.bluez.LEAdvertisement1"
 DBUS_PROP_IFACE     = "org.freedesktop.DBus.Properties"
 DBUS_OM_IFACE       = "org.freedesktop.DBus.ObjectManager"
-
-APP_PATH = "/org/bluez/empahteye"  # chemin de l'Application racine
 
 
 class BLEAdvertisement(dbus.service.Object):
@@ -113,7 +109,7 @@ class CharCommand(dbus.service.Object):
 
     def __init__(self, bus, server):
         dbus.service.Object.__init__(self, bus, self.PATH)
-        self.server = server  # référence vers BleServer pour appeler send_all_files / clear_all_data
+        self.server = server
 
     @dbus.service.method(DBUS_PROP_IFACE, in_signature="s", out_signature="a{sv}")
     def GetAll(self, iface):
@@ -127,7 +123,6 @@ class CharCommand(dbus.service.Object):
     def WriteValue(self, value, options):
         cmd = bytes(value).decode(errors="ignore").strip()
         print(f"[BLE] Commande reçue : {cmd}", flush=True)
-
         if cmd == "REQUEST_FILES":
             threading.Thread(target=self.server.send_all_files, daemon=True).start()
         elif cmd == "TRANSFER_OK":
@@ -136,30 +131,13 @@ class CharCommand(dbus.service.Object):
             print(f"[BLE] Commande inconnue : {cmd}", flush=True)
 
 
-class Application(dbus.service.Object):
-    """
-    Objet racine enregistré auprès de BlueZ via RegisterApplication.
-    BlueZ appelle GetManagedObjects dessus pour découvrir tous les services
-    et caractéristiques. Il doit être distinct du GattService lui-même.
-    """
-    PATH = "/org/bluez/empahteye"
-
-    def __init__(self, bus, service):
-        dbus.service.Object.__init__(self, bus, self.PATH)
-        self.service = service  # GattService déjà instancié
-
-    @dbus.service.method(DBUS_OM_IFACE, out_signature="a{oa{sa{sv}}}")
-    def GetManagedObjects(self):
-        return self.service.GetManagedObjects()
-
-
 class GattService(dbus.service.Object):
     PATH = "/org/bluez/empahteye/service0"
 
     def __init__(self, bus, server):
         dbus.service.Object.__init__(self, bus, self.PATH)
         self.char_transfer = CharTransfer(bus)
-        self.char_command = CharCommand(bus, server)
+        self.char_command  = CharCommand(bus, server)
 
     @dbus.service.method(DBUS_PROP_IFACE, in_signature="s", out_signature="a{sv}")
     def GetAll(self, iface):
@@ -168,22 +146,35 @@ class GattService(dbus.service.Object):
             "Primary": dbus.Boolean(True),
         }
 
+
+class Application(dbus.service.Object):
+    """
+    Objet racine enregistré auprès de BlueZ via RegisterApplication.
+    BlueZ appelle GetManagedObjects ici pour découvrir services et caractéristiques.
+    Doit être instancié dans le même thread que la GLib loop.
+    """
+    PATH = "/org/bluez/empahteye"
+
+    def __init__(self, bus, server):
+        dbus.service.Object.__init__(self, bus, self.PATH)
+        # Les objets dbus sont créés ici, dans le thread de la loop
+        self.service = GattService(bus, server)
+
     @dbus.service.method(DBUS_OM_IFACE, out_signature="a{oa{sa{sv}}}")
     def GetManagedObjects(self):
         return {
-            self.PATH:         {GATT_SERVICE_IFACE: self.GetAll(GATT_SERVICE_IFACE)},
-            CharTransfer.PATH: {GATT_CHAR_IFACE: self.char_transfer.GetAll(GATT_CHAR_IFACE)},
-            CharCommand.PATH:  {GATT_CHAR_IFACE: self.char_command.GetAll(GATT_CHAR_IFACE)},
+            GattService.PATH:  {GATT_SERVICE_IFACE: self.service.GetAll(GATT_SERVICE_IFACE)},
+            CharTransfer.PATH: {GATT_CHAR_IFACE:    self.service.char_transfer.GetAll(GATT_CHAR_IFACE)},
+            CharCommand.PATH:  {GATT_CHAR_IFACE:    self.service.char_command.GetAll(GATT_CHAR_IFACE)},
         }
 
 
 class BleServer:
     def __init__(self):
-        self.bus = None
-        self.service = None
-        self.app = None
-        self.adv = None
-        self.loop = None
+        self.bus          = None
+        self.app          = None   # Application (racine dbus)
+        self.adv          = None
+        self.loop         = None
         self.adapter_path = None
 
     def find_adapter(self, bus):
@@ -194,39 +185,39 @@ class BleServer:
         return None
 
     def start(self):
+        """
+        Appelé depuis on_loop_ready() — s'exécute donc dans le thread
+        principal (celui de la GLib loop). Tous les objets dbus.service.Object
+        sont créés ici pour que D-Bus puisse les retrouver.
+        """
         self.bus = dbus.SystemBus()
         self.adapter_path = self.find_adapter(self.bus)
         print(f"[BLE] Adaptateur trouvé : {self.adapter_path}", flush=True)
         if not self.adapter_path:
             raise RuntimeError("[BLE] Adaptateur GATT introuvable sur dbus")
 
-        # Nettoyage défensif : si un cycle précédent a mal terminé (process
-        # tué sans passer par stop()), BlueZ peut encore croire qu'une
-        # application/advertisement est enregistrée sur ce même chemin.
-        # On tente de la désenregistrer avant de repartir, en ignorant
-        # silencieusement l'échec si rien n'était enregistré.
+        # Nettoyage défensif (cycle précédent mal terminé)
         try:
-            gatt_manager_cleanup = dbus.Interface(
+            dbus.Interface(
                 self.bus.get_object(BLUEZ_SERVICE, self.adapter_path), GATT_MANAGER_IFACE
-            )
-            gatt_manager_cleanup.UnregisterApplication(Application.PATH)
+            ).UnregisterApplication(Application.PATH)
             print("[BLE] Ancienne application GATT nettoyée", flush=True)
         except Exception:
-            pass  # rien à nettoyer, c'est le cas normal
+            pass
 
         try:
-            adv_manager_cleanup = dbus.Interface(
+            dbus.Interface(
                 self.bus.get_object(BLUEZ_SERVICE, self.adapter_path), LE_ADV_MANAGER
-            )
-            adv_manager_cleanup.UnregisterAdvertisement(BLEAdvertisement.PATH)
+            ).UnregisterAdvertisement(BLEAdvertisement.PATH)
             print("[BLE] Ancien advertisement nettoyé", flush=True)
         except Exception:
-            pass  # rien à nettoyer, c'est le cas normal
+            pass
 
-        self.service = GattService(self.bus, self)
-        self.app     = Application(self.bus, self.service)
-        self.adv     = BLEAdvertisement(self.bus)
+        # Instanciation dans le thread de la loop
+        self.app = Application(self.bus, self)
+        self.adv = BLEAdvertisement(self.bus)
 
+        # Enregistrement GATT
         gatt_manager = dbus.Interface(
             self.bus.get_object(BLUEZ_SERVICE, self.adapter_path), GATT_MANAGER_IFACE
         )
@@ -236,6 +227,7 @@ class BleServer:
         except dbus.exceptions.DBusException as e:
             print(f"[BLE] Erreur GATT : {e}", flush=True)
 
+        # Enregistrement advertisement
         adv_manager = dbus.Interface(
             self.bus.get_object(BLUEZ_SERVICE, self.adapter_path), LE_ADV_MANAGER
         )
@@ -249,35 +241,30 @@ class BleServer:
         print("[BLE-SUBPROCESS] stop() - début", flush=True)
         if self.bus and self.adv:
             try:
-                print("[BLE-SUBPROCESS] stop() - unregister advertisement...", flush=True)
-                adv_manager = dbus.Interface(
+                dbus.Interface(
                     self.bus.get_object(BLUEZ_SERVICE, self.adapter_path), LE_ADV_MANAGER
-                )
-                adv_manager.UnregisterAdvertisement(BLEAdvertisement.PATH)
+                ).UnregisterAdvertisement(BLEAdvertisement.PATH)
                 print("[BLE-SUBPROCESS] stop() - advertisement désenregistrée", flush=True)
             except Exception as e:
                 print(f"[BLE] Erreur unregister adv : {e}", flush=True)
 
-        if self.bus and self.service:
+        if self.bus and self.app:
             try:
-                print("[BLE-SUBPROCESS] stop() - unregister GATT...", flush=True)
-                gatt_manager = dbus.Interface(
+                dbus.Interface(
                     self.bus.get_object(BLUEZ_SERVICE, self.adapter_path), GATT_MANAGER_IFACE
-                )
-                gatt_manager.UnregisterApplication(Application.PATH)
+                ).UnregisterApplication(Application.PATH)
                 print("[BLE-SUBPROCESS] stop() - GATT désenregistré", flush=True)
             except Exception as e:
                 print(f"[BLE] Erreur unregister GATT : {e}", flush=True)
 
-        print("[BLE-SUBPROCESS] stop() - avant loop.quit()", flush=True)
         if self.loop:
             self.loop.quit()
         print("[BLE-SUBPROCESS] stop() - fin", flush=True)
 
     def send_all_files(self):
-        if not self.service:
+        if not self.app:
             return
-        char = self.service.char_transfer
+        char = self.app.service.char_transfer
         dirs = [BT_SHARE_DIR1, BT_SHARE_DIR2]
         for directory in dirs:
             if not os.path.exists(directory):
@@ -287,11 +274,9 @@ class BleServer:
                     continue
                 filepath = os.path.join(directory, filename)
                 filesize = os.path.getsize(filepath)
-
                 char.notify_meta(filename, filesize)
                 time.sleep(CHUNK_DELAY)
                 print(f"[BLE] Envoi fichier : {filename} ({filesize} octets)", flush=True)
-
                 with open(filepath, "rb") as f:
                     while True:
                         chunk = f.read(CHUNK_SIZE)
@@ -299,9 +284,7 @@ class BleServer:
                             break
                         char.notify_chunk(chunk)
                         time.sleep(CHUNK_DELAY)
-
                 print(f"[BLE] Fichier envoyé : {filename}", flush=True)
-
         char.notify_meta("__END__", 0)
         print("[BLE] Tous les fichiers envoyés", flush=True)
 
@@ -322,19 +305,19 @@ class BleServer:
 
 
 def main():
+    # DBusGMainLoop dans le thread principal, avant toute connexion dbus
     dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
+
+    loop = GLib.MainLoop()
     server = BleServer()
-    server.loop = GLib.MainLoop()
+    server.loop = loop
 
     def handle_signal():
         try:
             print("[BLE-SUBPROCESS] handle_signal() appelé !", flush=True)
-            print("[BLE] Signal d'arrêt reçu, nettoyage...", flush=True)
             server.stop()
-            print("[BLE-SUBPROCESS] server.stop() terminé", flush=True)
         except Exception as e:
             import traceback
-            print(f"[BLE-SUBPROCESS] EXCEPTION dans handle_signal : {e}", flush=True)
             traceback.print_exc(file=sys.stdout)
             sys.stdout.flush()
             os._exit(1)
@@ -343,19 +326,28 @@ def main():
     GLib.unix_signal_add(GLib.PRIORITY_HIGH, signal.SIGTERM, handle_signal)
     GLib.unix_signal_add(GLib.PRIORITY_HIGH, signal.SIGINT, handle_signal)
 
-    # IMPORTANT : la boucle GLib doit tourner AVANT RegisterApplication.
-    # BlueZ rappelle l'application (GetManagedObjects) pendant l'enregistrement ;
-    # sans boucle active pour traiter cet appel entrant, BlueZ échoue avec
-    # "No object received".
-    glib_thread = threading.Thread(target=server.loop.run, daemon=True)
-    glib_thread.start()
-    time.sleep(0.3)  # laisse le temps à la loop de démarrer réellement
+    def on_loop_ready():
+        """
+        S'exécute dans le thread principal via idle_add, donc dans la GLib loop.
+        server.start() crée tous les objets dbus.service.Object ici —
+        même thread que la loop, ce qui est obligatoire pour que BlueZ
+        puisse appeler GetManagedObjects sur ces objets.
+        """
+        print("[BLE-SUBPROCESS] Loop GLib démarrée, appel de server.start()", flush=True)
+        try:
+            server.start()
+        except Exception as e:
+            import traceback
+            print(f"[BLE-SUBPROCESS] EXCEPTION dans server.start() : {e}", flush=True)
+            traceback.print_exc(file=sys.stdout)
+            sys.stdout.flush()
+            loop.quit()
+        return False  # ne pas répéter
 
-    print("[BLE-SUBPROCESS] Loop GLib démarrée, appel de server.start()", flush=True)
-    server.start()
+    GLib.idle_add(on_loop_ready)
 
-    # On attend ici que la loop se termine (déclenché par handle_signal → server.stop() → loop.quit())
-    glib_thread.join()
+    # Loop dans le thread principal : traite D-Bus, signaux Unix et idle callbacks
+    loop.run()
 
     print("[BLE] Processus BLE terminé", flush=True)
 
