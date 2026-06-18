@@ -14,6 +14,7 @@ from config import BT_SHARE_DIR1, BT_SHARE_DIR2, IMAGE_DIR, SAVE_IMAGE_DIR
 
 CHUNK_SIZE = 490
 CHUNK_DELAY = 0.05
+WAIT = 2
 
 SERVICE_UUID  = "948c621a-6017-443d-8f75-fd00cf7af340"
 CHAR_TRANSFER = "fbd3e679-420f-4027-86ac-528d8251ae94"
@@ -124,6 +125,7 @@ class CharCommand(dbus.service.Object):
         cmd = bytes(value).decode(errors="ignore").strip()
         print(f"[BLE] Commande reçue : {cmd}", flush=True)
         if cmd == "REQUEST_FILES":
+            time.sleep(WAIT)
             threading.Thread(target=self.server.send_all_files, daemon=True).start()
         elif cmd == "TRANSFER_OK":
             self.server.clear_all_data()

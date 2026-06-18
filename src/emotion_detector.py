@@ -44,7 +44,7 @@ model = EmotionEfficientNet(num_classes=5).to(device)
 model.load_state_dict(torch.load(MODEL_DIR, map_location=device))
 model.eval()
 
-emotion_labels = {0: "Happy", 1: "Surprise", 2: "Sad", 3: "Anger", 4: "Neutral"}
+emotion_labels = {0: "happy", 1: "surprise", 2: "sad", 3: "anger", 4: "neutral"}
 
 transform = transforms.Compose([
     transforms.Resize((260, 260)),
