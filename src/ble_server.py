@@ -14,8 +14,6 @@ from gi.repository import GLib
 # répertoire de travail / PYTHONPATH que le reste du projet)
 from config import BT_SHARE_DIR1, BT_SHARE_DIR2, IMAGE_DIR, SAVE_IMAGE_DIR
 
-dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
-
 CHUNK_SIZE = 490
 CHUNK_DELAY = 0.05
 
@@ -35,7 +33,7 @@ LE_ADV_IFACE        = "org.bluez.LEAdvertisement1"
 DBUS_PROP_IFACE     = "org.freedesktop.DBus.Properties"
 DBUS_OM_IFACE       = "org.freedesktop.DBus.ObjectManager"
 
-APP_PATH = "/org/bluez/empahteye/service0"
+APP_PATH = "/org/bluez/empahteye"  # chemin de l'Application racine
 
 
 class BLEAdvertisement(dbus.service.Object):
@@ -138,6 +136,23 @@ class CharCommand(dbus.service.Object):
             print(f"[BLE] Commande inconnue : {cmd}", flush=True)
 
 
+class Application(dbus.service.Object):
+    """
+    Objet racine enregistré auprès de BlueZ via RegisterApplication.
+    BlueZ appelle GetManagedObjects dessus pour découvrir tous les services
+    et caractéristiques. Il doit être distinct du GattService lui-même.
+    """
+    PATH = "/org/bluez/empahteye"
+
+    def __init__(self, bus, service):
+        dbus.service.Object.__init__(self, bus, self.PATH)
+        self.service = service  # GattService déjà instancié
+
+    @dbus.service.method(DBUS_OM_IFACE, out_signature="a{oa{sa{sv}}}")
+    def GetManagedObjects(self):
+        return self.service.GetManagedObjects()
+
+
 class GattService(dbus.service.Object):
     PATH = "/org/bluez/empahteye/service0"
 
@@ -166,6 +181,7 @@ class BleServer:
     def __init__(self):
         self.bus = None
         self.service = None
+        self.app = None
         self.adv = None
         self.loop = None
         self.adapter_path = None
@@ -193,7 +209,7 @@ class BleServer:
             gatt_manager_cleanup = dbus.Interface(
                 self.bus.get_object(BLUEZ_SERVICE, self.adapter_path), GATT_MANAGER_IFACE
             )
-            gatt_manager_cleanup.UnregisterApplication(APP_PATH)
+            gatt_manager_cleanup.UnregisterApplication(Application.PATH)
             print("[BLE] Ancienne application GATT nettoyée", flush=True)
         except Exception:
             pass  # rien à nettoyer, c'est le cas normal
@@ -208,13 +224,14 @@ class BleServer:
             pass  # rien à nettoyer, c'est le cas normal
 
         self.service = GattService(self.bus, self)
-        self.adv = BLEAdvertisement(self.bus)
+        self.app     = Application(self.bus, self.service)
+        self.adv     = BLEAdvertisement(self.bus)
 
         gatt_manager = dbus.Interface(
             self.bus.get_object(BLUEZ_SERVICE, self.adapter_path), GATT_MANAGER_IFACE
         )
         try:
-            gatt_manager.RegisterApplication(APP_PATH, {})
+            gatt_manager.RegisterApplication(Application.PATH, {})
             print("[BLE] Service GATT enregistré", flush=True)
         except dbus.exceptions.DBusException as e:
             print(f"[BLE] Erreur GATT : {e}", flush=True)
@@ -247,7 +264,7 @@ class BleServer:
                 gatt_manager = dbus.Interface(
                     self.bus.get_object(BLUEZ_SERVICE, self.adapter_path), GATT_MANAGER_IFACE
                 )
-                gatt_manager.UnregisterApplication(APP_PATH)
+                gatt_manager.UnregisterApplication(Application.PATH)
                 print("[BLE-SUBPROCESS] stop() - GATT désenregistré", flush=True)
             except Exception as e:
                 print(f"[BLE] Erreur unregister GATT : {e}", flush=True)
@@ -305,6 +322,7 @@ class BleServer:
 
 
 def main():
+    dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
     server = BleServer()
     server.loop = GLib.MainLoop()
 

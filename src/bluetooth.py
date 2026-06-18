@@ -28,8 +28,6 @@ class Bluetooth:
 
         subprocess.run(["bluetoothctl", "select", "hci0"], capture_output=True)
         subprocess.run(["bluetoothctl", "power", "on"], capture_output=True)
-        subprocess.run(["sudo", "btmgmt", "advertising", "on"], capture_output=True)
-        time.sleep(0.3)
         subprocess.run(["bluetoothctl", "discoverable", "on"], capture_output=True)
         subprocess.run(["bluetoothctl", "pairable", "on"], capture_output=True)
         subprocess.run(["bluetoothctl", "agent", "NoInputNoOutput"], capture_output=True)
