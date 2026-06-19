@@ -101,7 +101,7 @@ class Camera:
         else:
             data = []
         
-        data.append({"emotion": emotion, "timestamp": timestamp, "Saved?": True})
+        data.append({"emotion": emotion, "timestamp": timestamp, "saved?": True})
         
         with open(filepath, "w") as f:
             json.dump(data, f)
