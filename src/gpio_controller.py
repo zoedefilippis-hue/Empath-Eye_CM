@@ -63,7 +63,7 @@ btn_bt_on.when_pressed = bluetooth_ON
 btn_bt_off.when_pressed = bluetooth_OFF
 
 # OFF
-btn_power_off = Button(config.PIN_MAP["BTN_POWER_OFF"], pull_up=True)
+btn_power_off = Button(config.PIN_MAP["BTN_POWER_OFF"], pull_up=True, bounce_time=0.2)
 
 def add_shutdown_hook(fn):
     shutdown_hooks.append(fn)
