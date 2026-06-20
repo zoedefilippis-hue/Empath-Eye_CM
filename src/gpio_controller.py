@@ -6,7 +6,6 @@ import camera
 import emotion_detector
 import cv2
 from gpiozero import Button
-from rpi_ws281x import PixelStrip, Color #librairie qui contrôle la LED
 from bluetooth import Bluetooth
 from config import init_gpio
 
@@ -63,7 +62,7 @@ btn_bt_on.when_pressed = bluetooth_ON
 btn_bt_off.when_pressed = bluetooth_OFF
 
 # OFF
-btn_power_off = Button(config.PIN_MAP["BTN_POWER_OFF"], pull_up=True, bounce_time=0.2)
+btn_power_off = Button(config.PIN_MAP["BTN_POWER_OFF"], pull_up=True, bounce_time=0.05)
 
 def add_shutdown_hook(fn):
     shutdown_hooks.append(fn)
@@ -81,18 +80,19 @@ btn_power_off.when_pressed = shutdown
 
 # LED
 
-pixel = neopixel.NeoPixel(board.D12, config.LED_COUNT, brightness=config.LED_BRIGHTNESS/255)
+pixel = neopixel.NeoPixel(board.D18, config.LED_COUNT, brightness=config.LED_BRIGHTNESS/255)
 
 def set_color(r,g,b):
     pixel[0] = (r, g, b)
 
 def LED_color(emotion):
+    print(f"[LED] Couleur pour émotion : {emotion}")   # ← log utile pour debug
     if emotion == "joie":
-        set_color(255, 255, 0)
+        set_color(180, 110, 0)
     elif emotion == "colere":
         set_color(255, 0, 0)
     elif emotion == "surprise":
-        set_color(128, 0, 128) #A changer
+        set_color(80, 0, 160)
     elif emotion == "tristesse":
         set_color(0, 0, 255)
     elif emotion == "neutre":

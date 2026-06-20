@@ -31,7 +31,7 @@ IMAGE_DIR = "/home/empatheye1/empatheye/image/loop" #A MODIFIER AVEC L'ADRESSE D
 SAVE_IMAGE_DIR = "/home/empatheye1/empatheye/image/saved" #A MODIFIER AVEC L'ADRESSE DE LA CARTE SD
 CAMERA_WIDTH = 640
 CAMERA_HEIGHT = 480
-CAMERA_FRAMERATE = 1/2
+CAMERA_FRAMERATE = 1
 
 #LED 
 LED_COUNT = 1          
