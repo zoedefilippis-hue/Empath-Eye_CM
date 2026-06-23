@@ -1,4 +1,3 @@
-import lgpio
 import os
 
 
