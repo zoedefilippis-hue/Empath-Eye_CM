@@ -3,9 +3,10 @@ import config
 import gpio_controller
 import emotion_detector
 import cv2
+import threading
 from camera import Camera
 from gpio_controller import bt
-from gpio_controller import add_shutdown_hook
+from gpio_controller import add_shutdown_hook, LED_startup
 from config import init_gpio
 
 init_gpio()
@@ -15,6 +16,8 @@ camera.start()
 gpio_controller.set_camera(camera)
 
 add_shutdown_hook(camera.stop)
+
+threading.Thread(target=gpio_controller.LED_startup, daemon=True).start()
 
 def main():
     intervale = 1/config.CAMERA_FRAMERATE

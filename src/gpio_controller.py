@@ -6,10 +6,10 @@ import camera
 import emotion_detector
 import cv2
 import threading
+import time
 from gpiozero import Button
 from bluetooth import Bluetooth
 from config import init_gpio
-import time
 
 init_gpio()
 shutdown_hooks = []
@@ -120,6 +120,17 @@ def LED_color(emotion):
 
         set_color(*couleur)
 
+        led_timer = threading.Timer(1.0, LED_OFF)
+        led_timer.daemon = True
+        led_timer.start()
+
+def LED_startup():
+    global led_timer
+    time.sleep(0.5)
+    set_color(255,0,0)
+    with led_lock:
+        if led_timer is not None:
+            led_timer.cancel()
         led_timer = threading.Timer(1.0, LED_OFF)
         led_timer.daemon = True
         led_timer.start()
