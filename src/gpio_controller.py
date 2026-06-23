@@ -9,6 +9,7 @@ import threading
 from gpiozero import Button
 from bluetooth import Bluetooth
 from config import init_gpio
+import time
 
 init_gpio()
 shutdown_hooks = []
@@ -16,15 +17,22 @@ shutdown_hooks = []
 # BTN_CAM
 
 btn_save = Button(config.PIN_MAP["BTN_SAVE"], pull_up=True)
-
 _camera = None
+last_photo_time = 0
+MIN_PHOTO_INTERVAL = 2.0
 
 def set_camera(cam):
     global _camera
     _camera = cam
 
-def take_photo(channel = None):
-    print("Bouton 18 appuyé !")
+def take_photo(channel=None):
+    global last_photo_time
+    now = time.time()
+    if now - last_photo_time < MIN_PHOTO_INTERVAL:
+        print("Trop rapide, ignoré")
+        return
+    _last_photo_time = now
+    print("Bouton save appuyé !")
     if _camera is None:
         print("Caméra non prête")
         return
@@ -36,7 +44,7 @@ def take_photo(channel = None):
             LED_color(emotion)
             _camera.save_emotion(emotion)
         print(f"Photo sauvegardée : {filepath}")
-    except Exception as e :
+    except Exception as e:
         print(f"Erreur photo : {e}")
 
 btn_save.when_pressed = take_photo
