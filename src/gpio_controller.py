@@ -2,6 +2,7 @@ import subprocess
 import config
 import board
 import neopixel
+import camera
 import emotion_detector
 import cv2
 import threading
