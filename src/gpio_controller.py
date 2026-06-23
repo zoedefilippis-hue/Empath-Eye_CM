@@ -97,7 +97,7 @@ def LED_color(emotion):
     couleurs = {
         "joie":(110, 180, 0),
         "colere":(0, 255, 0),
-        "surprise":(0, 80, 160),
+        "surprise":(0, 150, 180),
         "tristesse":(0, 0, 255),
     }
     couleur=couleurs.get(emotion)
