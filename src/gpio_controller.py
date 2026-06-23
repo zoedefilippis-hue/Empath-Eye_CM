@@ -15,15 +15,16 @@ shutdown_hooks = []
 
 # BTN_CAM
 
-btn_save = Button(config.PIN_MAP["BTN_SAVE"], pull_up=True, bounce_time=0.3)
+btn_save = Button(config.PIN_MAP["BTN_SAVE"], pull_up=True)
+
 _camera = None
 
 def set_camera(cam):
     global _camera
     _camera = cam
 
-def take_photo(channel=None):
-    print("Bouton save appuyé !")
+def take_photo(channel = None):
+    print("Bouton 18 appuyé !")
     if _camera is None:
         print("Caméra non prête")
         return
@@ -35,7 +36,7 @@ def take_photo(channel=None):
             LED_color(emotion)
             _camera.save_emotion(emotion)
         print(f"Photo sauvegardée : {filepath}")
-    except Exception as e:
+    except Exception as e :
         print(f"Erreur photo : {e}")
 
 btn_save.when_pressed = take_photo
@@ -102,13 +103,13 @@ def LED_color(emotion):
     couleur=couleurs.get(emotion)
     if couleur is None:
         return
-    
+
     print(f"[LED] Couleur pour émotion : {emotion} → {couleur}")
 
     with led_lock:
         if led_timer is not None:
             led_timer.cancel()
-        
+
         set_color(*couleur)
 
         led_timer = threading.Timer(1.0, LED_OFF)
