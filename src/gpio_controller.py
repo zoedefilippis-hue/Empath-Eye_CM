@@ -31,7 +31,7 @@ def take_photo(channel=None):
     if now - last_photo_time < MIN_PHOTO_INTERVAL:
         print("Trop rapide, ignoré")
         return
-    _last_photo_time = now
+    last_photo_time = now
     print("Bouton save appuyé !")
     if _camera is None:
         print("Caméra non prête")
