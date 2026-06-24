@@ -16,7 +16,7 @@ shutdown_hooks = []
 
 # BTN_CAM
 
-btn_save = Button(config.PIN_MAP["BTN_SAVE"], pull_up=True)
+btn_save = Button(config.PIN_MAP["BTN_SAVE"], pull_up=True, bounce_time=0.5)
 _camera = None
 last_photo_time = 0
 MIN_PHOTO_INTERVAL = 2.0
