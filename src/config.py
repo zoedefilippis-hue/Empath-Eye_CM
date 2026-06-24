@@ -2,7 +2,7 @@ import os
 
 
 #initialisation PIN
-LED_EMOTION_PIN = 18
+LED_EMOTION_PIN = 10
 
 BUTTON_SAVE_PIN = 24
 BUTTON_POWER_OFF_PIN = 22
